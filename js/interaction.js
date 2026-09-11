@@ -23,6 +23,7 @@
         svg.setPointerCapture(evt.pointerId);
         svg.style.cursor = "grabbing";
       } else if (evt.button === 0) {
+        if (measureToolActive) { measureToolClick(evt); return; }
         deselect();
       }
       return;
@@ -100,7 +101,10 @@
     if (!activeTouches.has(evt.pointerId)) return;
     activeTouches.delete(evt.pointerId);
     if (activeTouches.size === 0) {
-      if (singleTouchPan && !singleTouchPan.moved) deselect();
+      if (singleTouchPan && !singleTouchPan.moved) {
+        if (measureToolActive) { measureToolClick(evt); }
+        else deselect();
+      }
       singleTouchPan = null;
       pinchState = null;
     } else if (activeTouches.size === 1) {
@@ -394,6 +398,7 @@
   let dragging = null;
   function startDrag(evt) {
     evt.stopPropagation();
+    if (measureToolActive) return; // Messmodus: kein Drag
     const R = currentRoom();
     if (!R) return;
     const id = Number(evt.currentTarget.dataset.id);

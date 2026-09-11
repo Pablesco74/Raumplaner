@@ -353,6 +353,7 @@
     syncEditorHeader();
     renderRoomSidebarList();
     syncRoomBarInputs();
+    clearMeasureToolLines();
     render();
     renderFurnitureList();
     renderOpeningList();
@@ -390,6 +391,9 @@
   drawerOverlay.addEventListener("click", closeDrawer);
 
   window.addEventListener("resize", updateRotateButton);
+
+  // ---------- Messwerkzeug Toggle ----------
+  document.getElementById("measureToolBtn").addEventListener("click", toggleMeasureTool);
 
   // ---------- landing page (Projekte + Räume-Übersicht) ----------
   const landingView = document.getElementById("landingView");
