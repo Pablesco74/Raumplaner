@@ -177,20 +177,20 @@
       case "wardrobe": body = wardrobeIcon(item); break;
       default: body = genericIcon(item);
     }
-    const cx = item.x + item.w / 2, cy = item.y + item.d / 2;
-    let label;
-    if (type === "generic") {
-      const fontSize = Math.min(Math.max(8, Math.min(item.w, item.d) * 0.16), 16);
-      label = `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="${item.color.text}" font-size="${fontSize}" font-weight="600">${escapeXml(item.name)}</text>`;
-    } else {
-      const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.11), 10);
-      label = `<text x="${item.x + 4}" y="${item.y + item.d - 4}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600">${escapeXml(item.name)}</text>`;
-    }
+    // Label wird NICHT mehr hier gerendert – es wird als unrotiertes
+    // Overlay über getAABB() in updateFurnitureLabels() gezeichnet.
     const selOutline = selected
       ? `<rect x="${item.x}" y="${item.y}" width="${item.w}" height="${item.d}" fill="none" stroke="#1B4E8F" stroke-width="2.5" rx="3"/>`
       : "";
     const lockIcon = item.locked
       ? `<text x="${item.x + item.w - 3}" y="${item.y + 3 + Math.min(11, Math.min(item.w, item.d) * 0.16)}" text-anchor="end" font-size="${Math.min(11, Math.max(8, Math.min(item.w, item.d) * 0.16))}">🔒</text>`
       : "";
-    return body + label + selOutline + furnitureDoorsSvg(item) + lockIcon;
+    return body + selOutline + furnitureDoorsSvg(item) + lockIcon;
+  }
+
+  // ---------- unrotiertes Möbel-Label (AABB-basiert) ----------
+  function furnitureLabelSvg(item) {
+    const box = getAABB(item);
+    const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.13), 12);
+    return `<text x="${box.minX + 3}" y="${box.maxY + fontSize + 2}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600" pointer-events="none">${escapeXml(item.name)}</text>`;
   }
