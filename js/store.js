@@ -29,7 +29,9 @@
       try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) { /* quota o. Ä. – stille Fehler */ }
     }, 200);
   }
+  let _undoHook = null; // wird von undo.js gesetzt
   function saveStoreNow() {
+    if (_undoHook) _undoHook();
     if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
     try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) { /* stille Fehler */ }
   }
