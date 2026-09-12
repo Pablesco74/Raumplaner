@@ -234,18 +234,38 @@
     const proj = currentProject();
     const listEl2 = document.getElementById("roomSidebarList");
     if (!proj) { listEl2.innerHTML = ""; return; }
-    listEl2.innerHTML = proj.rooms.map(r => `
-      <div class="room-row${r.id === store.currentRoomId ? " active" : ""}" data-roomrow="${r.id}">
-        <span class="room-row-name" data-roomrowname="${r.id}">${escapeXml(r.name)}</span>
-        <button class="del-btn" data-roomrowdel="${r.id}">🗑</button>
-        <div class="room-row-dims">
-          <input type="number" data-roomw="${r.id}" value="${r.room.w}" min="50" max="1500" step="1">
-          <span>×</span>
-          <input type="number" data-roomd="${r.id}" value="${r.room.d}" min="50" max="1500" step="1">
-          <span>cm</span>
-        </div>
-      </div>
-    `).join("");
+
+    // Räume nach Etage gruppieren (absteigend: höchstes Stockwerk zuerst)
+    const byFloor = {};
+    proj.rooms.forEach(r => {
+      const f = (r.floor != null) ? r.floor : 0;
+      if (!byFloor[f]) byFloor[f] = [];
+      byFloor[f].push(r);
+    });
+    const sortedFloors = Object.keys(byFloor).map(Number).sort((a, b) => b - a);
+    const hasMultipleFloors = sortedFloors.length > 1;
+
+    let html = "";
+    sortedFloors.forEach(f => {
+      if (hasMultipleFloors) {
+        html += `<div class="floor-group-label">${floorLabel(f)}</div>`;
+      }
+      byFloor[f].forEach(r => {
+        html += `
+          <div class="room-row${r.id === store.currentRoomId ? " active" : ""}" data-roomrow="${r.id}">
+            <span class="room-row-name" data-roomrowname="${r.id}">${escapeXml(r.name)}</span>
+            <button class="del-btn" data-roomrowdel="${r.id}">🗑</button>
+            <div class="room-row-dims">
+              <input type="number" data-roomw="${r.id}" value="${r.room.w}" min="50" max="1500" step="1">
+              <span>×</span>
+              <input type="number" data-roomd="${r.id}" value="${r.room.d}" min="50" max="1500" step="1">
+              <span>cm</span>
+            </div>
+          </div>
+        `;
+      });
+    });
+    listEl2.innerHTML = html;
 
     listEl2.querySelectorAll("[data-roomrow]").forEach(row => {
       const rid = Number(row.dataset.roomrow);

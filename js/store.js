@@ -1,5 +1,5 @@
 // ---------- Projekt/Raum-Datenmodell + localStorage ----------
-  function makeRoom(name) {
+  function makeRoom(name, floor) {
     return {
       id: store.nextRoomId++,
       name: name || "Neuer Raum",
@@ -9,8 +9,15 @@
       nextId: 1,
       nextOpeningId: 1,
       nextColor: 0,
-      floorType: "raster"
+      floorType: "raster",
+      floor: floor || 0
     };
+  }
+
+  function floorLabel(n) {
+    if (n === 0) return "EG";
+    if (n < 0) return (n === -1) ? "UG" : `${Math.abs(n)}. UG`;
+    return `${n}. OG`;
   }
   function makeProject(name) {
     const room = makeRoom("Raum 1");
