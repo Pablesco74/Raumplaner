@@ -14,6 +14,7 @@
   <div class="switch-row" style="margin-bottom: 10px;">
     <button id="landingNewProjectBtn">+ Neues Projekt</button>
     <button id="landingImportTrigger">📂 Projekt-Datei laden</button>
+    <button id="landingExportBtn">💾 Als Datei exportieren</button>
     <input type="file" id="landingImportFile" accept="application/json" style="display:none">
   </div>
   <div class="inline-form" id="landingNewProjectForm">
@@ -41,6 +42,7 @@
   <div class="canvas-wrap">
     <svg id="plan" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
     <input type="number" id="measureInput" class="measure-input" style="display:none;">
+    <button id="measureToolBtn" class="measure-tool-btn" title="Messwerkzeug aktivieren">📏</button>
     <div class="legend">
       <span class="lk"><span class="sw" style="background:#1F3A5C"></span>Wand</span>
       <span class="lk"><span class="sw" style="background:var(--amber); border-bottom:1px dashed var(--amber)"></span>Tür</span>
@@ -169,6 +171,15 @@
 
 </div>
 
-<script src="script.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/store.js"></script>
+<script src="js/undo.js"></script>
+<script src="js/geometry.js"></script>
+<script src="js/floor.js"></script>
+<script src="js/svg-elements.js"></script>
+<script src="js/render.js"></script>
+<script src="js/measure-tool.js"></script>
+<script src="js/interaction.js"></script>
+<script src="js/ui.js"></script>
 </body>
 </html>

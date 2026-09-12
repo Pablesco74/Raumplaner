@@ -32,14 +32,66 @@ const palette = [
     return { id: store.nextProjectId++, name: name || "Neues Projekt", rooms: [room] };
   }
 
+  const LS_KEY = "raumplaner_store";
+
+  // ---------- localStorage Speichern / Laden ----------
+  let _saveTimer = null;
+  function saveStore() {
+    // Debounced: bei schnellen Änderungen (Drag) nicht jeden Frame schreiben
+    if (_saveTimer) return;
+    _saveTimer = setTimeout(() => {
+      _saveTimer = null;
+      try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) { /* quota o. Ä. – stille Fehler */ }
+    }, 200);
+  }
+  function saveStoreNow() {
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+    try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) { /* stille Fehler */ }
+  }
+  function loadStore() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.projects) && parsed.projects.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) { /* beschädigte Daten – Fallback auf Default */ }
+    return null;
+  }
+  function exportStoreAsFile() {
+    const json = JSON.stringify(store, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "raumplaner-export.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   let store = { projects: [], currentProjectId: null, currentRoomId: null, nextProjectId: 1, nextRoomId: 1 };
   (function bootstrap() {
-    const room = makeRoom("Wohnzimmer");
-    const project = makeProject("Meine Wohnung");
-    project.rooms = [room];
-    store.projects = [project];
-    store.currentProjectId = project.id;
-    store.currentRoomId = room.id;
+    const saved = loadStore();
+    if (saved) {
+      store = saved;
+      // Sicherstellen, dass aktuelle IDs gültig sind
+      if (!store.currentProjectId || !store.projects.find(p => p.id === store.currentProjectId)) {
+        store.currentProjectId = store.projects[0].id;
+      }
+      ensureCurrentRoom();
+    } else {
+      const room = makeRoom("Wohnzimmer");
+      const project = makeProject("Meine Wohnung");
+      project.rooms = [room];
+      store.projects = [project];
+      store.currentProjectId = project.id;
+      store.currentRoomId = room.id;
+      saveStoreNow();
+    }
   })();
 
   function currentProject() { return store.projects.find(p => p.id === store.currentProjectId); }
@@ -471,6 +523,7 @@ const palette = [
     updateMeasureGuides();
     updateOpeningMeasure();
     applyCamera();
+    saveStore();
   }
 
   // ---------- selection ----------
@@ -667,12 +720,14 @@ const palette = [
       updateMeasureGuides();
       renderFurnitureList();
       updateRotateButton();
+      saveStoreNow();
     } else if (tool === "lock") {
       item.locked = !item.locked;
       refreshItemVisual(item);
       const gEl = svg.querySelector(`g[data-id="${item.id}"]`);
       if (gEl) gEl.style.cursor = item.locked ? "pointer" : "grab";
       updateRotateButton();
+      saveStoreNow();
     } else if (tool === "delete") {
       R.items = R.items.filter(i => i.id !== item.id);
       selectedId = null;
@@ -893,6 +948,7 @@ const palette = [
     svg.removeEventListener("pointercancel", endOpeningDrag);
     if (evt && evt.currentTarget && evt.currentTarget.style) evt.currentTarget.style.cursor = "grab";
     renderOpeningList();
+    saveStoreNow();
   }
 
   function commitMeasureInput() {
@@ -925,6 +981,7 @@ const palette = [
       updateRotateButton();
       updateMeasureGuides();
       renderFurnitureList();
+      saveStoreNow();
     }
     measureInput.style.display = "none";
   }
@@ -1024,6 +1081,7 @@ const palette = [
     svg.removeEventListener("pointerup", endDrag);
     svg.removeEventListener("pointercancel", endDrag);
     if (evt && evt.currentTarget && evt.currentTarget.style) evt.currentTarget.style.cursor = "grab";
+    saveStoreNow();
   }
 
   // ---------- furniture list panel ----------
@@ -1243,11 +1301,13 @@ const palette = [
   setupInlineEdit(editorProjectNameEl, () => currentProject() ? currentProject().name : "", (val) => {
     if (currentProject()) currentProject().name = val;
     syncEditorHeader();
+    saveStoreNow();
   });
   setupInlineEdit(editorRoomNameEl, () => currentRoom() ? currentRoom().name : "", (val) => {
     if (currentRoom()) currentRoom().name = val;
     syncEditorHeader();
     renderRoomSidebarList();
+    saveStoreNow();
   });
   function syncEditorHeader() {
     const proj = currentProject(), R = currentRoom();
@@ -1285,6 +1345,7 @@ const palette = [
             store.currentRoomId = rid;
             selectedId = null;
             camera = { scale: 1, x: 0, y: 0 };
+            saveStoreNow();
             fullRefresh();
           }
         }, 260);
@@ -1304,6 +1365,7 @@ const palette = [
           if (text && room) room.name = text;
           renderRoomSidebarList();
           syncEditorHeader();
+          saveStoreNow();
         };
         span.addEventListener("blur", commit, { once: true });
         span.addEventListener("keydown", (e2) => { if (e2.key === "Enter") { e2.preventDefault(); span.blur(); } });
@@ -1320,6 +1382,7 @@ const palette = [
           selectedId = null;
           camera = { scale: 1, x: 0, y: 0 };
         }
+        saveStoreNow();
         fullRefresh();
       });
     });
@@ -1339,6 +1402,7 @@ const palette = [
         renderOpeningList();
       }
       renderRoomSidebarList();
+      saveStoreNow();
     }
     listEl2.querySelectorAll("[data-roomw], [data-roomd]").forEach(input => {
       input.addEventListener("pointerdown", (evt) => evt.stopPropagation());
@@ -1360,6 +1424,7 @@ const palette = [
     store.currentRoomId = r.id;
     selectedId = null;
     camera = { scale: 1, x: 0, y: 0 };
+    saveStoreNow();
     fullRefresh();
   });
 
@@ -1540,6 +1605,7 @@ const palette = [
       svgEl.removeEventListener("pointercancel", onUp);
       g.style.cursor = "grab";
       renderApartmentPreview(proj, svgEl);
+      saveStoreNow();
     }
     g.style.cursor = "grabbing";
     svgEl.addEventListener("pointermove", onMove);
@@ -1592,6 +1658,7 @@ const palette = [
           store.currentProjectId = pid;
           store.currentRoomId = rid;
           selectedId = null;
+          saveStoreNow();
           showEditor();
         }, 260);
       });
@@ -1610,6 +1677,7 @@ const palette = [
         store.currentProjectId = Number(btn.dataset.openproj);
         ensureCurrentRoom();
         selectedId = null;
+        saveStoreNow();
         showEditor();
       });
     });
@@ -1617,6 +1685,7 @@ const palette = [
       btn.addEventListener("click", () => {
         const proj = store.projects.find(x => x.id === Number(btn.dataset.addroom));
         proj.rooms.push(makeRoom("Neuer Raum"));
+        saveStoreNow();
         renderLandingProjects();
       });
     });
@@ -1639,6 +1708,7 @@ const palette = [
         const pid = Number(btn.dataset.delproj);
         store.projects = store.projects.filter(p => p.id !== pid);
         if (store.currentProjectId === pid) { store.currentProjectId = store.projects[0].id; ensureCurrentRoom(); }
+        saveStoreNow();
         renderLandingProjects();
       });
     });
@@ -1657,6 +1727,7 @@ const palette = [
     store.currentRoomId = p.rooms[0].id;
     selectedId = null;
     toggleForm("landingNewProjectForm", false);
+    saveStoreNow();
     showEditor();
   });
 
@@ -1675,7 +1746,10 @@ const palette = [
     }
     toggleForm("landingRenameForm", false);
     renderLandingProjects();
+    saveStoreNow();
   });
+
+  document.getElementById("landingExportBtn").addEventListener("click", exportStoreAsFile);
 
   const landingImportFile = document.getElementById("landingImportFile");
   document.getElementById("landingImportTrigger").addEventListener("click", () => landingImportFile.click());
@@ -1693,6 +1767,7 @@ const palette = [
         }
         ensureCurrentRoom();
         selectedId = null;
+        saveStoreNow();
         renderLandingProjects();
         showLandingMsg("Datei geladen.");
       } catch (err) {
@@ -1702,5 +1777,8 @@ const palette = [
     };
     reader.readAsText(file);
   });
+
+  // Sicherheitsnetz: beim Schließen des Tabs sofort speichern
+  window.addEventListener("beforeunload", saveStoreNow);
 
   showLanding();
