@@ -192,5 +192,5 @@
   function furnitureLabelSvg(item) {
     const box = getAABB(item);
     const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.13), 12);
-    return `<text x="${box.minX + 3}" y="${box.maxY + fontSize + 2}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600" pointer-events="none">${escapeXml(item.name)}</text>`;
+    return `<text x="${box.minX + 3}" y="${box.maxY - 4}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600" pointer-events="none">${escapeXml(item.name)}</text>`;
   }
