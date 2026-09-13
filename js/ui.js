@@ -1,3 +1,23 @@
+// ---------- Stockwerk-Helfer (AUFGABE 5) ----------
+  function getProjectFloors(proj) {
+    const floors = new Set();
+    proj.rooms.forEach(r => floors.add(r.floor != null ? r.floor : 0));
+    return [...floors].sort((a, b) => b - a); // absteigend (höchstes zuerst)
+  }
+  function floorOptionsHtml(proj, selectedFloor) {
+    const floors = getProjectFloors(proj);
+    const min = Math.min(...floors);
+    const max = Math.max(...floors);
+    const all = new Set(floors);
+    all.add(max + 1);
+    if (min - 1 >= -3) all.add(min - 1);
+    const sorted = [...all].sort((a, b) => b - a);
+    return sorted.map(f =>
+      `<option value="${f}"${f === selectedFloor ? ' selected' : ''}>${floorLabel(f)}</option>`
+    ).join('');
+  }
+  const aptActiveFloor = {}; // projectId -> aktive Etage in der Vorschau
+
 // ---------- furniture list panel ----------
   function renderFurnitureList() {
     const R = currentRoom();
@@ -251,11 +271,15 @@
         html += `<div class="floor-group-label">${floorLabel(f)}</div>`;
       }
       byFloor[f].forEach(r => {
+        const roomFloor = r.floor != null ? r.floor : 0;
         html += `
           <div class="room-row${r.id === store.currentRoomId ? " active" : ""}" data-roomrow="${r.id}">
             <span class="room-row-name" data-roomrowname="${r.id}">${escapeXml(r.name)}</span>
             <button class="del-btn" data-roomrowdel="${r.id}">🗑</button>
             <div class="room-row-dims">
+              <select data-roomfloor="${r.id}" class="room-floor-sel" title="Stockwerk">
+                ${floorOptionsHtml(proj, roomFloor)}
+              </select>
               <input type="number" data-roomw="${r.id}" value="${r.room.w}" min="50" max="1500" step="1">
               <span>×</span>
               <input type="number" data-roomd="${r.id}" value="${r.room.d}" min="50" max="1500" step="1">
@@ -344,6 +368,26 @@
         applyRoomDimChange(Number(input.dataset.roomw || input.dataset.roomd));
       });
     });
+    // Stockwerk-Zuordnung pro Raum
+    listEl2.querySelectorAll("[data-roomfloor]").forEach(sel => {
+      sel.addEventListener("pointerdown", (evt) => evt.stopPropagation());
+      sel.addEventListener("change", () => {
+        const rid = Number(sel.dataset.roomfloor);
+        const room = proj.rooms.find(r => r.id === rid);
+        if (room) {
+          room.floor = Number(sel.value);
+          if (proj.layout) delete proj.layout[rid];
+          saveStoreNow();
+          renderRoomSidebarList();
+        }
+      });
+    });
+    // Sidebar-Stockwerk-Dropdown für "Neuer Raum" befüllen
+    const floorSel = document.getElementById("sidebarAddRoomFloor");
+    if (floorSel) {
+      const curFloor = currentRoom() ? (currentRoom().floor != null ? currentRoom().floor : 0) : 0;
+      floorSel.innerHTML = floorOptionsHtml(proj, curFloor);
+    }
   }
   function showRoomSidebarMsg(text) {
     const el = document.getElementById("roomSidebarMsg");
@@ -353,7 +397,21 @@
   }
   document.getElementById("sidebarAddRoom").addEventListener("click", () => {
     const proj = currentProject();
-    const r = makeRoom("Neuer Raum");
+    const floorSel = document.getElementById("sidebarAddRoomFloor");
+    const floor = floorSel ? Number(floorSel.value) : (currentRoom() ? (currentRoom().floor || 0) : 0);
+    const r = makeRoom("Neuer Raum", floor);
+    proj.rooms.push(r);
+    store.currentRoomId = r.id;
+    selectedId = null;
+    camera = { scale: 1, x: 0, y: 0 };
+    saveStoreNow();
+    fullRefresh();
+  });
+  document.getElementById("sidebarAddFloor").addEventListener("click", () => {
+    const proj = currentProject();
+    const floors = getProjectFloors(proj);
+    const nextFloor = (floors.length > 0 ? Math.max(...floors) : 0) + 1;
+    const r = makeRoom("Neuer Raum", nextFloor);
     proj.rooms.push(r);
     store.currentRoomId = r.id;
     selectedId = null;
@@ -458,30 +516,47 @@
 
   function ensureRoomLayout(proj) {
     if (!proj.layout) proj.layout = {};
-    proj.rooms.forEach((r, idx) => {
-      if (!proj.layout[r.id]) {
-        let x = 0;
-        for (let i = 0; i < idx; i++) {
-          const r2 = proj.rooms[i];
-          const p2 = proj.layout[r2.id];
-          if (p2) x = Math.max(x, p2.x + r2.room.w + 40);
+    // Pro Etage separat layouten
+    const byFloor = {};
+    proj.rooms.forEach(r => {
+      const f = r.floor != null ? r.floor : 0;
+      if (!byFloor[f]) byFloor[f] = [];
+      byFloor[f].push(r);
+    });
+    Object.values(byFloor).forEach(floorRooms => {
+      floorRooms.forEach((r, idx) => {
+        if (!proj.layout[r.id]) {
+          let x = 0;
+          for (let i = 0; i < idx; i++) {
+            const r2 = floorRooms[i];
+            const p2 = proj.layout[r2.id];
+            if (p2) x = Math.max(x, p2.x + r2.room.w + 40);
+          }
+          proj.layout[r.id] = { x, y: 0 };
         }
-        proj.layout[r.id] = { x, y: 0 };
-      }
+      });
     });
   }
 
-  function renderApartmentPreview(proj, svgEl) {
+  function renderApartmentPreview(proj, svgEl, floorFilter) {
     ensureRoomLayout(proj);
+    const rooms = (floorFilter != null)
+      ? proj.rooms.filter(r => (r.floor != null ? r.floor : 0) === floorFilter)
+      : proj.rooms;
+    if (rooms.length === 0) {
+      svgEl.setAttribute("viewBox", "0 0 200 60");
+      svgEl.innerHTML = `<text x="100" y="30" text-anchor="middle" font-size="12" fill="#6B7A90">Keine Räume auf dieser Etage</text>`;
+      return;
+    }
     const pad = 30;
-    const maxX = Math.max(...proj.rooms.map(r => proj.layout[r.id].x + r.room.w), 100);
-    const maxY = Math.max(...proj.rooms.map(r => proj.layout[r.id].y + r.room.d), 100);
-    const minX = Math.min(...proj.rooms.map(r => proj.layout[r.id].x), 0);
-    const minY = Math.min(...proj.rooms.map(r => proj.layout[r.id].y), 0);
+    const maxX = Math.max(...rooms.map(r => proj.layout[r.id].x + r.room.w), 100);
+    const maxY = Math.max(...rooms.map(r => proj.layout[r.id].y + r.room.d), 100);
+    const minX = Math.min(...rooms.map(r => proj.layout[r.id].x), 0);
+    const minY = Math.min(...rooms.map(r => proj.layout[r.id].y), 0);
     svgEl.setAttribute("viewBox", `${minX - pad} ${minY - pad} ${maxX - minX + pad * 2} ${maxY - minY + pad * 2}`);
     svgEl.innerHTML = "";
 
-    proj.rooms.forEach(r => {
+    rooms.forEach(r => {
       const pos = proj.layout[r.id];
       const g = document.createElementNS(NS, "g");
       g.dataset.roomId = r.id;
@@ -552,12 +627,45 @@
       return;
     }
     container.innerHTML = store.projects.map(p => {
-      const roomsHtml = p.rooms.map(r => `
-        <button class="room-chip" data-openroom="${p.id}:${r.id}" data-roomdbl="${p.id}:${r.id}">
-          <span>${escapeXml(r.name)}</span>
-          <span class="room-chip-dims">${r.room.w} × ${r.room.d} cm · ${r.items.length} Möbel</span>
-        </button>
-      `).join("");
+      // Räume nach Etage gruppieren
+      const byFloor = {};
+      p.rooms.forEach(r => {
+        const f = r.floor != null ? r.floor : 0;
+        if (!byFloor[f]) byFloor[f] = [];
+        byFloor[f].push(r);
+      });
+      const sortedFloors = Object.keys(byFloor).map(Number).sort((a, b) => b - a);
+      const multiFloor = sortedFloors.length > 1;
+
+      let roomsHtml = '';
+      sortedFloors.forEach(f => {
+        const chips = byFloor[f].map(r => `
+          <button class="room-chip" data-openroom="${p.id}:${r.id}" data-roomdbl="${p.id}:${r.id}">
+            <span>${escapeXml(r.name)}</span>
+            <span class="room-chip-dims">${r.room.w} × ${r.room.d} cm · ${r.items.length} Möbel</span>
+          </button>
+        `).join("");
+        if (multiFloor) {
+          roomsHtml += `<div class="floor-chip-group">
+            <div class="floor-chip-label">${floorLabel(f)}</div>
+            <div class="room-chip-list">
+              ${chips}
+              <button class="room-chip add-chip" data-addroom="${p.id}" data-addfloor="${f}">+ Raum</button>
+            </div>
+          </div>`;
+        } else {
+          roomsHtml += `<div class="room-chip-list">
+            ${chips}
+            <button class="room-chip add-chip" data-addroom="${p.id}" data-addfloor="${f}">+ Raum</button>
+          </div>`;
+        }
+      });
+
+      // Stockwerk-Tabs für Vorschau
+      const floorTabsHtml = multiFloor ? sortedFloors.map((f, i) =>
+        `<button class="apt-floor-tab${i === 0 ? ' active' : ''}" data-aptfloor="${p.id}:${f}">${floorLabel(f)}</button>`
+      ).join("") : "";
+
       return `
         <div class="project-card">
           <div class="project-card-head">
@@ -568,11 +676,10 @@
               <button class="icon-btn danger" data-delproj="${p.id}">🗑</button>
             </div>
           </div>
-          <div class="room-chip-list">
-            ${roomsHtml}
-            <button class="room-chip add-chip" data-addroom="${p.id}">+ Raum</button>
-          </div>
+          ${roomsHtml}
+          <button class="room-chip add-chip" data-addfloor-new="${p.id}" style="margin-top:8px">+ Stockwerk</button>
           <div class="apt-preview-wrap" id="apt-wrap-${p.id}">
+            ${floorTabsHtml ? `<div class="apt-floor-tabs" id="apt-tabs-${p.id}">${floorTabsHtml}</div>` : ''}
             <svg class="apt-preview" id="apt-svg-${p.id}" viewBox="0 0 100 100"></svg>
             <p class="apt-hint">Räume ziehen, um die Wohnung anzuordnen – nahe beieinander liegende Räume docken aneinander an.</p>
           </div>
@@ -616,7 +723,18 @@
     container.querySelectorAll("[data-addroom]").forEach(btn => {
       btn.addEventListener("click", () => {
         const proj = store.projects.find(x => x.id === Number(btn.dataset.addroom));
-        proj.rooms.push(makeRoom("Neuer Raum"));
+        const floor = btn.dataset.addfloor != null ? Number(btn.dataset.addfloor) : 0;
+        proj.rooms.push(makeRoom("Neuer Raum", floor));
+        saveStoreNow();
+        renderLandingProjects();
+      });
+    });
+    container.querySelectorAll("[data-addfloor-new]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const proj = store.projects.find(x => x.id === Number(btn.dataset["addfloor-new"]));
+        const floors = getProjectFloors(proj);
+        const nextFloor = (floors.length > 0 ? Math.max(...floors) : 0) + 1;
+        proj.rooms.push(makeRoom("Neuer Raum", nextFloor));
         saveStoreNow();
         renderLandingProjects();
       });
@@ -630,8 +748,26 @@
         if (willShow) {
           const proj = store.projects.find(p => p.id === pid);
           const svgEl = document.getElementById("apt-svg-" + pid);
-          renderApartmentPreview(proj, svgEl);
+          const floors = getProjectFloors(proj);
+          if (!(pid in aptActiveFloor)) aptActiveFloor[pid] = floors[0];
+          renderApartmentPreview(proj, svgEl, floors.length > 1 ? aptActiveFloor[pid] : null);
         }
+      });
+    });
+    container.querySelectorAll("[data-aptfloor]").forEach(tab => {
+      tab.addEventListener("click", () => {
+        const [pidStr, floorStr] = tab.dataset.aptfloor.split(":");
+        const pid = Number(pidStr);
+        const floor = Number(floorStr);
+        aptActiveFloor[pid] = floor;
+        // Aktiven Tab markieren
+        const tabsWrap = tab.parentElement;
+        tabsWrap.querySelectorAll(".apt-floor-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        // Preview neu rendern
+        const proj = store.projects.find(p => p.id === pid);
+        const svgEl = document.getElementById("apt-svg-" + pid);
+        renderApartmentPreview(proj, svgEl, floor);
       });
     });
     container.querySelectorAll("[data-delproj]").forEach(btn => {

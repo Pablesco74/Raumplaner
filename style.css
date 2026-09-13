@@ -194,3 +194,30 @@
     background: var(--navy-2); border: 1px solid var(--line-soft); border-radius: 6px; touch-action: none;
   }
   .apt-hint { font-size: 11px; color: var(--cream-dim); margin: 6px 0 0; }
+
+  .floor-group-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--cream-dim); font-weight: 600; margin: 12px 0 4px; padding: 0 2px;
+  }
+  .floor-group-label:first-child { margin-top: 0; }
+  .room-floor-sel {
+    width: 70px; min-width: 70px; font-size: 12px; padding: 4px 5px;
+    font-family: inherit;
+  }
+  .floor-chip-group { margin-bottom: 14px; }
+  .floor-chip-group:last-child { margin-bottom: 0; }
+  .floor-chip-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--cream-dim); font-weight: 600; margin-bottom: 6px;
+  }
+  .apt-floor-tabs {
+    display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .apt-floor-tab {
+    background: var(--navy-2); border: 1px solid var(--line); color: var(--cream);
+    font-size: 12px; padding: 4px 10px; border-radius: 4px; cursor: pointer;
+    font-weight: 500;
+  }
+  .apt-floor-tab.active {
+    background: var(--amber); color: var(--amber-dark); border-color: var(--amber);
+  }
