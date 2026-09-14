@@ -1,9 +1,12 @@
 // ---------- Projekt/Raum-Datenmodell + localStorage ----------
   function makeRoom(name, floor) {
+    const w = 400, d = 300;
     return {
       id: store.nextRoomId++,
       name: name || "Neuer Raum",
-      room: { w: 400, d: 300 },
+      room: { w, d },
+      shape: shapeFromRect(w, d),
+      nextWallId: 5,
       items: [],
       openings: [],
       nextId: 1,
@@ -90,6 +93,13 @@
         return;
       }
       store = raw;
+      // Shapes für alle geladenen Räume sicherstellen (Kompatibilität)
+      store.projects.forEach(p => {
+        p.rooms.forEach(r => {
+          ensureShape(r);
+          if (!r.nextWallId) r.nextWallId = Math.max(5, ...r.shape.wallIds) + 1;
+        });
+      });
       // Sicherstellen, dass aktuelle IDs gültig sind
       if (!store.currentProjectId || !store.projects.find(p => p.id === store.currentProjectId)) {
         store.currentProjectId = store.projects[0].id;

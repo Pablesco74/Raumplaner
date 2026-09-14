@@ -353,6 +353,7 @@
       const w = Math.max(50, Math.min(1500, Number(wInput.value) || room.room.w));
       const d = Math.max(50, Math.min(1500, Number(dInput.value) || room.room.d));
       room.room = { w, d };
+      room.shape = rebuildRectShape(w, d, room.shape);
       room.openings = room.openings.filter(o => openingFits(o, room.room));
       if (rid === store.currentRoomId) {
         camera = { scale: 1, x: 0, y: 0 };
@@ -831,6 +832,13 @@
         if (!parsed || !Array.isArray(parsed.projects) || parsed.projects.length === 0) throw new Error("Kein gültiges Projekt gefunden.");
         parsed = migrateStore(parsed);
         store = parsed;
+        // Shapes für importierte Räume sicherstellen
+        store.projects.forEach(p => {
+          p.rooms.forEach(r => {
+            ensureShape(r);
+            if (!r.nextWallId) r.nextWallId = Math.max(5, ...r.shape.wallIds) + 1;
+          });
+        });
         if (!store.currentProjectId || !store.projects.find(p => p.id === store.currentProjectId)) {
           store.currentProjectId = store.projects[0].id;
         }

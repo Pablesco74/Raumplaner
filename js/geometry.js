@@ -1,3 +1,112 @@
+// ---------- Polygon-Shape: Datenmodell + Helfer (TA 1) ----------
+  // Ein Raum-Shape besteht aus Vertices (CW-Windung in Screen-Coords)
+  // und parallelen wallIds. Wand i geht von vertex[i] → vertex[(i+1)%n].
+
+  /** Erzeugt ein Rechteck-Shape aus Breite/Tiefe. */
+  function shapeFromRect(w, d) {
+    return {
+      vertices: [{ x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: d }, { x: 0, y: d }],
+      wallIds: [1, 2, 3, 4]
+    };
+  }
+
+  /** Baut ein Rechteck-Shape mit neuen Maßen, behält aber die vorhandenen wallIds. */
+  function rebuildRectShape(w, d, existingShape) {
+    const wallIds = (existingShape && existingShape.wallIds && existingShape.wallIds.length === 4)
+      ? existingShape.wallIds.slice()
+      : [1, 2, 3, 4];
+    return {
+      vertices: [{ x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: d }, { x: 0, y: d }],
+      wallIds: wallIds
+    };
+  }
+
+  /** Stellt sicher, dass ein Raum-Objekt ein Shape hat. Erzeugt es aus room.{w,d} falls nötig. */
+  function ensureShape(roomObj) {
+    if (roomObj.shape) return roomObj.shape;
+    const { w, d } = roomObj.room;
+    roomObj.shape = shapeFromRect(w, d);
+    if (!roomObj.nextWallId) roomObj.nextWallId = 5;
+    return roomObj.shape;
+  }
+
+  /** Geometrie einer Wand im Polygon (Index-basiert).
+   *  Gibt start, end, tangent, normal (Innennormale = links der Laufrichtung bei CW),
+   *  length und wallId zurück. */
+  function getWallSegment(shape, idx) {
+    const n = shape.vertices.length;
+    const start = shape.vertices[idx];
+    const end = shape.vertices[(idx + 1) % n];
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const length = Math.hypot(dx, dy);
+    const tangent = length > 0 ? { x: dx / length, y: dy / length } : { x: 1, y: 0 };
+    // CW-Windung: Innennormale = links der Laufrichtung = (-ty, tx)
+    const normal = { x: -tangent.y, y: tangent.x };
+    return { start, end, tangent, normal, length, wallId: shape.wallIds[idx] };
+  }
+
+  /** Findet den Wall-Index zu einer wallId. Gibt -1 zurück wenn nicht gefunden. */
+  function wallIndexById(shape, wallId) {
+    return shape.wallIds.indexOf(wallId);
+  }
+
+  /** Splittet eine Wand am gegebenen Punkt. Längeres Segment behält die Original-ID,
+   *  kürzeres bekommt die neue ID. Modifiziert shape in-place. */
+  function splitWall(shape, wallIndex, point, nextWallIdFn) {
+    const n = shape.vertices.length;
+    const start = shape.vertices[wallIndex];
+    const end = shape.vertices[(wallIndex + 1) % n];
+    const originalId = shape.wallIds[wallIndex];
+
+    const distToStart = Math.hypot(point.x - start.x, point.y - start.y);
+    const distToEnd = Math.hypot(point.x - end.x, point.y - end.y);
+
+    const newId = nextWallIdFn();
+    let id1, id2;
+    if (distToStart >= distToEnd) {
+      // start→point ist länger → behält Original-ID
+      id1 = originalId;
+      id2 = newId;
+    } else {
+      // point→end ist länger → behält Original-ID
+      id1 = newId;
+      id2 = originalId;
+    }
+
+    // Vertex einfügen, wallIds aktualisieren
+    shape.vertices.splice(wallIndex + 1, 0, { x: point.x, y: point.y });
+    shape.wallIds.splice(wallIndex, 1, id1, id2);
+
+    return shape;
+  }
+
+  /** Berechnet die Fläche des Polygons (positiv für CW in Screen-Coords). */
+  function shapeArea(shape) {
+    const verts = shape.vertices;
+    const n = verts.length;
+    let area = 0;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      area += verts[i].x * verts[j].y;
+      area -= verts[j].x * verts[i].y;
+    }
+    return area / 2; // positiv bei CW (Y-down)
+  }
+
+  /** Prüft, ob ein Shape ein achsenparalleles Rechteck ist (4 Vertices, rechte Winkel). */
+  function isAxisAlignedRect(shape) {
+    if (!shape || shape.vertices.length !== 4) return false;
+    const v = shape.vertices;
+    // Prüfe: alle Kanten achsenparallel
+    for (let i = 0; i < 4; i++) {
+      const j = (i + 1) % 4;
+      const dx = Math.abs(v[j].x - v[i].x);
+      const dy = Math.abs(v[j].y - v[i].y);
+      if (dx > 0.1 && dy > 0.1) return false; // Diagonale Kante
+    }
+    return true;
+  }
+
 // ---------- Geometrie: Wände, Öffnungen, AABB, Snapping ----------
   function wallGeometry(wall, dims) {
     const { w, d } = dims;
