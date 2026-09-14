@@ -42,16 +42,11 @@
     if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
     try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) { /* stille Fehler */ }
   }
-  function loadStore() {
+  function loadRawStore() {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.projects) && parsed.projects.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) { /* beschädigte Daten – Fallback auf Default */ }
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* beschädigtes JSON */ }
     return null;
   }
   function exportStoreAsFile() {
@@ -67,17 +62,43 @@
     URL.revokeObjectURL(url);
   }
 
-  let store = { projects: [], currentProjectId: null, currentRoomId: null, nextProjectId: 1, nextRoomId: 1 };
+  let store = { projects: [], currentProjectId: null, currentRoomId: null, nextProjectId: 1, nextRoomId: 1, schemaVersion: SCHEMA_VERSION };
   (function bootstrap() {
-    const saved = loadStore();
-    if (saved) {
-      store = saved;
+    let raw = loadRawStore();
+
+    if (raw) {
+      // Grundstruktur prüfen
+      if (!raw.projects || !Array.isArray(raw.projects) || raw.projects.length === 0) {
+        showMigrationError(
+          "Die gespeicherten Daten sind beschädigt oder unvollständig " +
+          "(kein gültiges Projekt-Array gefunden). Du kannst die Rohdaten " +
+          "als Backup exportieren oder alles löschen und neu anfangen.",
+          raw
+        );
+        return;
+      }
+      // Migration anwenden
+      try {
+        raw = migrateStore(raw);
+      } catch (e) {
+        showMigrationError(
+          "Die gespeicherten Daten konnten nicht migriert werden: " +
+          e.message + " Du kannst die Rohdaten als Backup exportieren " +
+          "oder alles löschen und neu anfangen.",
+          raw
+        );
+        return;
+      }
+      store = raw;
       // Sicherstellen, dass aktuelle IDs gültig sind
       if (!store.currentProjectId || !store.projects.find(p => p.id === store.currentProjectId)) {
         store.currentProjectId = store.projects[0].id;
       }
       ensureCurrentRoom();
+      // Migrierte Daten (mit aktueller schemaVersion) sofort zurückschreiben
+      saveStoreNow();
     } else {
+      // Kein gespeicherter Stand — frisch starten
       const room = makeRoom("Wohnzimmer");
       const project = makeProject("Meine Wohnung");
       project.rooms = [room];

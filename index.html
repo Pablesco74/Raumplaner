@@ -56,6 +56,15 @@
   </div>
 </div>
 
+<div class="app" id="migrationError" style="display:none">
+  <h1>⚠️ Datenfehler</h1>
+  <p id="migrationErrorMsg"></p>
+  <div class="switch-row" style="margin-top: 14px;">
+    <button id="migrationExportBtn">💾 Daten als Backup exportieren</button>
+    <button class="icon-btn danger" id="migrationResetBtn">🗑 Daten löschen &amp; neu starten</button>
+  </div>
+</div>
+
 <button class="drawer-toggle" id="drawerToggle" aria-label="Menü öffnen">›</button>
 <div class="drawer-overlay" id="drawerOverlay"></div>
 <div class="drawer" id="drawer">
@@ -181,6 +190,7 @@
 </div>
 
 <script src="js/constants.js"></script>
+<script src="js/migration.js"></script>
 <script src="js/store.js"></script>
 <script src="js/undo.js"></script>
 <script src="js/geometry.js"></script>

@@ -827,8 +827,9 @@
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const parsed = JSON.parse(e.target.result);
+        let parsed = JSON.parse(e.target.result);
         if (!parsed || !Array.isArray(parsed.projects) || parsed.projects.length === 0) throw new Error("Kein gültiges Projekt gefunden.");
+        parsed = migrateStore(parsed);
         store = parsed;
         if (!store.currentProjectId || !store.projects.find(p => p.id === store.currentProjectId)) {
           store.currentProjectId = store.projects[0].id;
@@ -849,4 +850,4 @@
   // Sicherheitsnetz: beim Schließen des Tabs sofort speichern
   window.addEventListener("beforeunload", saveStoreNow);
 
-  showLanding();
+  if (!_migrationFailed) showLanding();
