@@ -49,6 +49,7 @@
     background: var(--navy-2); border: 1px solid var(--line); color: var(--cream);
     font-size: 13px; padding: 7px 9px; border-radius: 4px; cursor: pointer; min-width: 30px;
   }
+  .icon-btn:disabled { opacity: 0.35; cursor: default; }
   .icon-btn.danger { color: #C0392B; }
   .icon-btn.armed { background: #C0392B; border-color: #C0392B; color: #FFFFFF; }
   .inline-form { display: none; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
