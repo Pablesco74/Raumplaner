@@ -177,20 +177,19 @@
       case "wardrobe": body = wardrobeIcon(item); break;
       default: body = genericIcon(item);
     }
-    // Label wird NICHT mehr hier gerendert – es wird als unrotiertes
-    // Overlay über getAABB() in updateFurnitureLabels() gezeichnet.
+    // Label: links unten im Möbelstück, gegen-rotiert damit es horizontal lesbar bleibt
+    const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.13), 12);
+    const lx = item.x + 3;
+    const ly = item.y + item.d - 4;
+    const counterRot = item.rot ? ` transform="rotate(${-item.rot} ${lx} ${ly})"` : '';
+    const label = `<text x="${lx}" y="${ly}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600" pointer-events="none"${counterRot}>${escapeXml(item.name)}</text>`;
+
     const selOutline = selected
       ? `<rect x="${item.x}" y="${item.y}" width="${item.w}" height="${item.d}" fill="none" stroke="#1B4E8F" stroke-width="2.5" rx="3"/>`
       : "";
     const lockIcon = item.locked
       ? `<text x="${item.x + item.w - 3}" y="${item.y + 3 + Math.min(11, Math.min(item.w, item.d) * 0.16)}" text-anchor="end" font-size="${Math.min(11, Math.max(8, Math.min(item.w, item.d) * 0.16))}">🔒</text>`
       : "";
-    return body + selOutline + furnitureDoorsSvg(item) + lockIcon;
+    return body + selOutline + furnitureDoorsSvg(item) + lockIcon + label;
   }
 
-  // ---------- unrotiertes Möbel-Label (AABB-basiert) ----------
-  function furnitureLabelSvg(item) {
-    const box = getAABB(item);
-    const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.13), 12);
-    return `<text x="${box.minX + 3}" y="${box.maxY - 4}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600" pointer-events="none">${escapeXml(item.name)}</text>`;
-  }

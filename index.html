@@ -34,7 +34,11 @@
 
 <div class="app" id="editorView" style="display:none">
   <div class="room-header">
-    <button class="ghost-btn" id="backToLanding" style="margin-bottom: 10px; border: 1px solid var(--line); color: var(--cream-dim); background: transparent;">← Alle Projekte</button>
+    <div style="display:flex; gap:6px; margin-bottom:10px; align-items:center;">
+      <button class="ghost-btn" id="backToLanding" style="border: 1px solid var(--line); color: var(--cream-dim); background: transparent;">← Alle Projekte</button>
+      <button class="icon-btn" id="undoBtn" title="Rückgängig (Strg+Z)" disabled>↩</button>
+      <button class="icon-btn" id="redoBtn" title="Wiederholen (Strg+Y)" disabled>↪</button>
+    </div>
     <p class="room-header-project" id="editorProjectName" title="Doppelklick zum Umbenennen"></p>
     <h1 class="room-header-name" id="editorRoomName" title="Doppelklick zum Umbenennen"></h1>
   </div>
@@ -49,6 +53,15 @@
       <span class="lk"><span class="sw" style="background:var(--window-blue); border-bottom:1px dashed var(--window-blue)"></span>Fenster</span>
       <br>Mausrad zum Zoomen &nbsp;·&nbsp; rechte Maustaste ziehen zum Verschieben &nbsp;·&nbsp; Möbel antippen zeigt den Dreh-Knopf
     </div>
+  </div>
+</div>
+
+<div class="app" id="migrationError" style="display:none">
+  <h1>⚠️ Datenfehler</h1>
+  <p id="migrationErrorMsg"></p>
+  <div class="switch-row" style="margin-top: 14px;">
+    <button id="migrationExportBtn">💾 Daten als Backup exportieren</button>
+    <button class="icon-btn danger" id="migrationResetBtn">🗑 Daten löschen &amp; neu starten</button>
   </div>
 </div>
 
@@ -177,6 +190,7 @@
 </div>
 
 <script src="js/constants.js"></script>
+<script src="js/migration.js"></script>
 <script src="js/store.js"></script>
 <script src="js/undo.js"></script>
 <script src="js/geometry.js"></script>

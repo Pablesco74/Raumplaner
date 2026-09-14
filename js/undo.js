@@ -8,6 +8,13 @@ let redoStack = [];
 
 let _undoSuppress = false; // unterdrückt Snapshots während undo/redo
 
+function updateUndoButtons() {
+  const undoBtn = document.getElementById("undoBtn");
+  const redoBtn = document.getElementById("redoBtn");
+  if (undoBtn) undoBtn.disabled = undoStack.length === 0;
+  if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+}
+
 function undoSnapshot() {
   if (_undoSuppress) return;
   // Vollständigen Store-Zustand als JSON-String speichern
@@ -15,6 +22,7 @@ function undoSnapshot() {
   if (undoStack.length > UNDO_MAX) undoStack.shift();
   // Jede neue Aktion löscht den Redo-Stack
   redoStack = [];
+  updateUndoButtons();
 }
 
 // Hook in saveStoreNow() registrieren
@@ -39,6 +47,7 @@ function undoApply(json) {
   // localStorage aktualisieren (damit der Zustand konsistent ist)
   saveStoreNow();
   _undoSuppress = false;
+  updateUndoButtons();
 }
 
 function undo() {
@@ -56,6 +65,10 @@ function redo() {
   const next = redoStack.pop();
   undoApply(next);
 }
+
+// Button-Klicks
+document.getElementById("undoBtn").addEventListener("click", undo);
+document.getElementById("redoBtn").addEventListener("click", redo);
 
 // Keyboard-Shortcuts
 document.addEventListener("keydown", (evt) => {

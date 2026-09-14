@@ -111,7 +111,6 @@
       svg.appendChild(g);
     });
 
-    updateFurnitureLabels();
     updateRotateButton();
     updateMeasureGuides();
     updateOpeningMeasure();
@@ -119,20 +118,11 @@
     saveStore();
   }
 
-  // ---------- unrotierte Möbel-Labels ----------
-  function updateFurnitureLabels() {
-    let group = svg.querySelector("#furnitureLabelsGroup");
-    if (!group) { group = document.createElementNS(NS, "g"); group.id = "furnitureLabelsGroup"; svg.appendChild(group); }
-    const R = currentRoom();
-    if (!R || R.items.length === 0) { group.innerHTML = ""; return; }
-    group.innerHTML = R.items.map(item => furnitureLabelSvg(item)).join("");
-  }
 
   // ---------- selection ----------
   function refreshItemVisual(item) {
     const g = svg.querySelector(`g[data-id="${item.id}"]`);
     if (g) g.innerHTML = furnitureGroupInner(item);
-    updateFurnitureLabels();
   }
   function refreshAllVisuals() {
     const R = currentRoom();
