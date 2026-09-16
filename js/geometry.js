@@ -369,66 +369,167 @@
     };
   }
 
+  function distPointToSegment(px, py, ax, ay, bx, by) {
+    var dx = bx - ax, dy = by - ay;
+    var len2 = dx * dx + dy * dy;
+    if (len2 === 0) return { dist: Math.hypot(px - ax, py - ay), cx: ax, cy: ay, t: 0 };
+    var t = ((px - ax) * dx + (py - ay) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    var cx = ax + t * dx, cy = ay + t * dy;
+    return { dist: Math.hypot(px - cx, py - cy), cx: cx, cy: cy, t: t };
+  }
+
+  function signedDistToWallLine(px, py, seg) {
+    var dx = px - seg.start.x, dy = py - seg.start.y;
+    return dx * seg.normal.x + dy * seg.normal.y;
+  }
+
+  function nearestWallToAABBSide(box, shape, side) {
+    var testPoints;
+    if (side === "left")   testPoints = [{ x: box.minX, y: (box.minY + box.maxY) / 2 }];
+    else if (side === "right")  testPoints = [{ x: box.maxX, y: (box.minY + box.maxY) / 2 }];
+    else if (side === "top")    testPoints = [{ x: (box.minX + box.maxX) / 2, y: box.minY }];
+    else                        testPoints = [{ x: (box.minX + box.maxX) / 2, y: box.maxY }];
+    var bestDist = Infinity, bestWallIdx = -1, bestClosest = null;
+    var n = shape.vertices.length;
+    for (var i = 0; i < n; i++) {
+      var seg = getWallSegment(shape, i);
+      for (var j = 0; j < testPoints.length; j++) {
+        var r = distPointToSegment(testPoints[j].x, testPoints[j].y,
+          seg.start.x, seg.start.y, seg.end.x, seg.end.y);
+        if (r.dist < bestDist) {
+          bestDist = r.dist;
+          bestWallIdx = i;
+          bestClosest = { x: r.cx, y: r.cy };
+        }
+      }
+    }
+    return { dist: bestDist, wallIdx: bestWallIdx, closest: bestClosest };
+  }
+
   function applySnapping(item, R) {
-    const { w, d } = R.room;
-    let box = getAABB(item);
-    let snappedX = false, snappedY = false;
-    if (Math.abs(box.minX - 0) <= SNAP) { item.x += (0 - box.minX); snappedX = true; }
-    else if (Math.abs(box.maxX - w) <= SNAP) { item.x += (w - box.maxX); snappedX = true; }
-    if (Math.abs(box.minY - 0) <= SNAP) { item.y += (0 - box.minY); snappedY = true; }
-    else if (Math.abs(box.maxY - d) <= SNAP) { item.y += (d - box.maxY); snappedY = true; }
+    var shape = R.shape;
+    var n = shape.vertices.length;
+    var box = getAABB(item);
+    var cx = (box.minX + box.maxX) / 2, cy = (box.minY + box.maxY) / 2;
+    var snapped = false;
+
+    var bestDist = Infinity, bestShift = null;
+    for (var i = 0; i < n; i++) {
+      var seg = getWallSegment(shape, i);
+      var sides = [
+        { px: box.minX, py: cy, axis: "x", edge: box.minX },
+        { px: box.maxX, py: cy, axis: "x", edge: box.maxX },
+        { px: cx, py: box.minY, axis: "y", edge: box.minY },
+        { px: cx, py: box.maxY, axis: "y", edge: box.maxY }
+      ];
+      for (var j = 0; j < 4; j++) {
+        var s = sides[j];
+        var r = distPointToSegment(s.px, s.py, seg.start.x, seg.start.y, seg.end.x, seg.end.y);
+        if (r.dist <= SNAP && r.dist < bestDist) {
+          bestDist = r.dist;
+          bestShift = { dx: r.cx - s.px, dy: r.cy - s.py };
+        }
+      }
+    }
+    if (bestShift) {
+      item.x += bestShift.dx;
+      item.y += bestShift.dy;
+      snapped = true;
+    }
 
     box = getAABB(item);
-    for (const other of R.items) {
+    for (var k = 0; k < R.items.length; k++) {
+      var other = R.items[k];
       if (other.id === item.id) continue;
-      const ob = getAABB(other);
-      const vOverlap = box.minY < ob.maxY && box.maxY > ob.minY;
-      const hOverlap = box.minX < ob.maxX && box.maxX > ob.minX;
-      if (!snappedX && vOverlap) {
-        if (Math.abs(box.maxX - ob.minX) <= SNAP) { item.x += (ob.minX - box.maxX); snappedX = true; }
-        else if (Math.abs(box.minX - ob.maxX) <= SNAP) { item.x += (ob.maxX - box.minX); snappedX = true; }
+      var ob = getAABB(other);
+      var vOverlap = box.minY < ob.maxY && box.maxY > ob.minY;
+      var hOverlap = box.minX < ob.maxX && box.maxX > ob.minX;
+      if (vOverlap) {
+        if (Math.abs(box.maxX - ob.minX) <= SNAP) { item.x += (ob.minX - box.maxX); }
+        else if (Math.abs(box.minX - ob.maxX) <= SNAP) { item.x += (ob.maxX - box.minX); }
       }
-      if (!snappedY && hOverlap) {
-        if (Math.abs(box.maxY - ob.minY) <= SNAP) { item.y += (ob.minY - box.maxY); snappedY = true; }
-        else if (Math.abs(box.minY - ob.maxY) <= SNAP) { item.y += (ob.maxY - box.minY); snappedY = true; }
+      if (hOverlap) {
+        if (Math.abs(box.maxY - ob.minY) <= SNAP) { item.y += (ob.minY - box.maxY); }
+        else if (Math.abs(box.minY - ob.maxY) <= SNAP) { item.y += (ob.maxY - box.minY); }
       }
-      if (snappedX && snappedY) break;
       box = getAABB(item);
     }
     item.x = Math.round(item.x);
     item.y = Math.round(item.y);
+    return snapped;
+  }
+
+  function autoRotateToWall(item, R) {
+    var shape = R.shape;
+    var n = shape.vertices.length;
+    var box = getAABB(item);
+    var bestDist = Infinity, bestWallIdx = -1;
+    var testPoints = [
+      { x: box.minX, y: (box.minY + box.maxY) / 2 },
+      { x: box.maxX, y: (box.minY + box.maxY) / 2 },
+      { x: (box.minX + box.maxX) / 2, y: box.minY },
+      { x: (box.minX + box.maxX) / 2, y: box.maxY }
+    ];
+    for (var i = 0; i < n; i++) {
+      var seg = getWallSegment(shape, i);
+      for (var j = 0; j < testPoints.length; j++) {
+        var r = distPointToSegment(testPoints[j].x, testPoints[j].y,
+          seg.start.x, seg.start.y, seg.end.x, seg.end.y);
+        if (r.dist < bestDist) { bestDist = r.dist; bestWallIdx = i; }
+      }
+    }
+    if (bestDist > SNAP || bestWallIdx < 0) return false;
+    var seg = getWallSegment(shape, bestWallIdx);
+    var wallAngle = Math.atan2(seg.tangent.y, seg.tangent.x) * 180 / Math.PI;
+    var snapRot = Math.round(wallAngle / 90) * 90;
+    if (Math.abs(wallAngle - snapRot) < 1) return false;
+    var candidate = Math.round(wallAngle);
+    while (candidate < 0) candidate += 360;
+    candidate = candidate % 360;
+    if (item.rot === candidate) return false;
+    item.rot = candidate;
+    return true;
   }
 
   function nearestEdges(item, R) {
-    const box = getAABB(item);
-    const w = R.room.w, d = R.room.d;
-    let leftGap = box.minX - 0, leftTarget = 0;
-    let rightGap = w - box.maxX, rightTarget = w;
-    let topGap = box.minY - 0, topTarget = 0;
-    let bottomGap = d - box.maxY, bottomTarget = d;
-    R.items.forEach(other => {
+    var shape = R.shape;
+    var box = getAABB(item);
+    var cx = (box.minX + box.maxX) / 2, cy = (box.minY + box.maxY) / 2;
+
+    var leftRes = nearestWallToAABBSide(box, shape, "left");
+    var rightRes = nearestWallToAABBSide(box, shape, "right");
+    var topRes = nearestWallToAABBSide(box, shape, "top");
+    var bottomRes = nearestWallToAABBSide(box, shape, "bottom");
+
+    var leftGap = leftRes.dist, leftTarget = leftRes.closest ? leftRes.closest.x : 0;
+    var rightGap = rightRes.dist, rightTarget = rightRes.closest ? rightRes.closest.x : box.maxX;
+    var topGap = topRes.dist, topTarget = topRes.closest ? topRes.closest.y : 0;
+    var bottomGap = bottomRes.dist, bottomTarget = bottomRes.closest ? bottomRes.closest.y : box.maxY;
+
+    R.items.forEach(function(other) {
       if (other.id === item.id) return;
-      const ob = getAABB(other);
-      const vOverlap = box.minY < ob.maxY && box.maxY > ob.minY;
-      const hOverlap = box.minX < ob.maxX && box.maxX > ob.minX;
+      var ob = getAABB(other);
+      var vOverlap = box.minY < ob.maxY && box.maxY > ob.minY;
+      var hOverlap = box.minX < ob.maxX && box.maxX > ob.minX;
       if (vOverlap) {
-        const gapL = box.minX - ob.maxX;
+        var gapL = box.minX - ob.maxX;
         if (gapL >= 0 && gapL < leftGap) { leftGap = gapL; leftTarget = ob.maxX; }
-        const gapR = ob.minX - box.maxX;
+        var gapR = ob.minX - box.maxX;
         if (gapR >= 0 && gapR < rightGap) { rightGap = gapR; rightTarget = ob.minX; }
       }
       if (hOverlap) {
-        const gapT = box.minY - ob.maxY;
+        var gapT = box.minY - ob.maxY;
         if (gapT >= 0 && gapT < topGap) { topGap = gapT; topTarget = ob.maxY; }
-        const gapB = ob.minY - box.maxY;
+        var gapB = ob.minY - box.maxY;
         if (gapB >= 0 && gapB < bottomGap) { bottomGap = gapB; bottomTarget = ob.minY; }
       }
     });
-    const horiz = (leftGap <= rightGap)
+    var horiz = (leftGap <= rightGap)
       ? { gap: leftGap, from: box.minX, to: leftTarget }
       : { gap: rightGap, from: box.maxX, to: rightTarget };
-    const vert = (topGap <= bottomGap)
+    var vert = (topGap <= bottomGap)
       ? { gap: topGap, from: box.minY, to: topTarget }
       : { gap: bottomGap, from: box.maxY, to: bottomTarget };
-    return { horiz, vert, box };
+    return { horiz: horiz, vert: vert, box: box };
   }

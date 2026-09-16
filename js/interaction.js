@@ -588,8 +588,10 @@
     item.x = Math.round(p.x - dragging.offsetX);
     item.y = Math.round(p.y - dragging.offsetY);
     const margin = Math.max(item.w, item.d);
-    item.x = Math.max(-margin, Math.min(R.room.w + margin - item.w, item.x));
-    item.y = Math.max(-margin, Math.min(R.room.d + margin - item.d, item.y));
+    const bbox = shapeBBox(R.shape);
+    item.x = Math.max(bbox.minX - margin, Math.min(bbox.maxX + margin - item.w, item.x));
+    item.y = Math.max(bbox.minY - margin, Math.min(bbox.maxY + margin - item.d, item.y));
+    autoRotateToWall(item, R);
     applySnapping(item, R);
     refreshItemVisual(item);
     const g = svg.querySelector(`g[data-id="${item.id}"]`);
