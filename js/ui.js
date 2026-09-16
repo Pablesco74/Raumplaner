@@ -77,21 +77,22 @@
       openingListEl.innerHTML = '<p class="empty">Noch keine Türen oder Fenster.</p>';
       return;
     }
-    const wallLabel = { top: "Oben", right: "Rechts", bottom: "Unten", left: "Links" };
     const typeLabel = { door: "Tür", "window-single": "Fenster (einfach)", "window-double": "Fenster (doppelt)" };
     openingListEl.innerHTML = "";
     R.openings.forEach(o => {
+      const wLabel = wallLabelForId(o.wallId, R.shape);
+      const cd = posToCornerDist(o, R.shape);
       const row = document.createElement("div");
       row.className = "item-row";
       row.innerHTML = `
         <div class="item-head">
-          <span class="item-name">${typeLabel[o.type]} · ${wallLabel[o.wall]}</span>
+          <span class="item-name">${typeLabel[o.type]} · ${wLabel}</span>
         </div>
         <div class="item-controls">
           <label>Breite</label>
           <input type="number" data-owidth="${o.id}" value="${o.width}" min="20" max="500" step="1">
-          <label>Abstand v. ${o.corner}</label>
-          <input type="number" data-odist="${o.id}" value="${o.dist}" min="0" max="1500" step="1">
+          <label>Abstand v. ${cd.corner}</label>
+          <input type="number" data-odist="${o.id}" value="${cd.dist}" min="0" max="1500" step="1">
           <button class="del-btn" data-odel="${o.id}">Entfernen</button>
         </div>
       `;
@@ -105,7 +106,7 @@
         if (!o) return;
         const prev = o.width;
         o.width = Math.max(20, Number(input.value) || prev);
-        if (!openingFits(o, R2.room)) { o.width = prev; input.value = prev; return; }
+        if (!openingFits(o, R2.shape)) { o.width = prev; input.value = prev; return; }
         render();
       });
     });
@@ -114,9 +115,11 @@
         const R2 = currentRoom();
         const o = R2.openings.find(x => x.id === Number(input.dataset.odist));
         if (!o) return;
-        const prev = o.dist;
-        o.dist = Math.max(0, Number(input.value) || 0);
-        if (!openingFits(o, R2.room)) { o.dist = prev; input.value = prev; return; }
+        const prevPos = o.pos;
+        const cd = posToCornerDist(o, R2.shape);
+        const newDist = Math.max(0, Number(input.value) || 0);
+        o.pos = cornerDistToPos(o.wallId, R2.shape, cd.corner, newDist, o.width);
+        if (!openingFits(o, R2.shape)) { o.pos = prevPos; input.value = cd.dist; return; }
         render();
       });
     });
@@ -139,33 +142,63 @@
   const oHingeField = document.getElementById("oHingeField");
   const oError = document.getElementById("oError");
 
+  function refreshWallAndCornerOptions() {
+    const R = currentRoom();
+    if (!R) return;
+    const shape = R.shape;
+    const info = rectWallUiInfo(shape);
+    if (info) {
+      oWallSel.innerHTML = info.map(w => `<option value="${w.wallId}">${w.label}</option>`).join("");
+    } else {
+      oWallSel.innerHTML = shape.wallIds.map((wid, idx) => {
+        const seg = getWallSegment(shape, idx);
+        return `<option value="${wid}">Wand ${idx+1} (${Math.round(seg.length)} cm)</option>`;
+      }).join("");
+    }
+    refreshCornerOptions();
+  }
   function refreshCornerOptions() {
-    const geom = wallGeometry(oWallSel.value, currentRoom().room);
-    const corners = geom.corners;
-    oCornerSel.innerHTML = corners.map(c => `<option value="${c}">${c}</option>`).join("");
-    oHingeSel.innerHTML = corners.map(c => `<option value="${c}">${c}</option>`).join("");
+    const R = currentRoom();
+    if (!R) return;
+    const wallId = Number(oWallSel.value);
+    const shape = R.shape;
+    const info = rectWallUiInfo(shape);
+    if (info) {
+      const w = info.find(i => i.wallId === wallId);
+      if (w) {
+        oCornerSel.innerHTML = w.corners.map(c => `<option value="${c}">${c}</option>`).join("");
+        oHingeSel.innerHTML = w.corners.map(c => `<option value="${c}">${c}</option>`).join("");
+        return;
+      }
+    }
+    oCornerSel.innerHTML = '<option value="Start">Start</option><option value="Ende">Ende</option>';
+    oHingeSel.innerHTML = '<option value="Start">Start</option><option value="Ende">Ende</option>';
   }
   function refreshHingeVisibility() {
     oHingeField.style.display = oTypeSel.value === "window-double" ? "none" : "flex";
   }
   oWallSel.addEventListener("change", refreshCornerOptions);
   oTypeSel.addEventListener("change", refreshHingeVisibility);
-  refreshCornerOptions();
+  refreshWallAndCornerOptions();
   refreshHingeVisibility();
 
   document.getElementById("addOpening").addEventListener("click", () => {
     const R = currentRoom();
-    const wall = oWallSel.value;
+    const wallId = Number(oWallSel.value);
     const type = oTypeSel.value;
     const width = Math.max(20, Number(document.getElementById("oWidth").value) || 90);
     const corner = oCornerSel.value;
     const dist = Math.max(0, Number(document.getElementById("oDist").value) || 0);
-    const hinge = type === "window-double" ? corner : oHingeSel.value;
+    const hingeCorner = type === "window-double" ? corner : oHingeSel.value;
 
-    const candidate = { wall, type, width, corner, dist, hinge };
-    if (!openingFits(candidate, R.room)) {
-      const geom = wallGeometry(wall, R.room);
-      oError.textContent = `Passt nicht: Abstand + Breite überschreitet die Wandlänge (${geom.length} cm).`;
+    const pos = cornerDistToPos(wallId, R.shape, corner, dist, width);
+    const hingeAtStart = hingeCornerToAtStart(wallId, R.shape, hingeCorner);
+
+    const candidate = { wallId, type, width, pos, hingeAtStart };
+    if (!openingFits(candidate, R.shape)) {
+      const idx = wallIndexById(R.shape, wallId);
+      const seg = idx >= 0 ? getWallSegment(R.shape, idx) : { length: 0 };
+      oError.textContent = `Passt nicht: Abstand + Breite überschreitet die Wandlänge (${Math.round(seg.length)} cm).`;
       oError.style.display = "block";
       return;
     }
@@ -189,9 +222,10 @@
     const doors = Number(doorsSel.value) || 0;
     const color = palette[R.nextColor % palette.length];
     R.nextColor++;
+    const bbox = shapeBBox(R.shape);
     R.items.push({
       id: R.nextId++, name, w, d,
-      x: Math.round((R.room.w - w) / 2), y: Math.round((R.room.d - d) / 2),
+      x: Math.round((bbox.minX + bbox.maxX) / 2 - w / 2), y: Math.round((bbox.minY + bbox.maxY) / 2 - d / 2),
       rot: 0, doors, color, locked: false
     });
     nameInput.value = "";
@@ -354,7 +388,7 @@
       const d = Math.max(50, Math.min(1500, Number(dInput.value) || room.room.d));
       room.room = { w, d };
       room.shape = rebuildRectShape(w, d, room.shape);
-      room.openings = room.openings.filter(o => openingFits(o, room.room));
+      room.openings = room.openings.filter(o => openingFits(o, room.shape));
       if (rid === store.currentRoomId) {
         camera = { scale: 1, x: 0, y: 0 };
         render();
@@ -426,7 +460,7 @@
     const R = currentRoom();
     if (!R) return;
     document.getElementById("floorType").value = R.floorType;
-    refreshCornerOptions();
+    refreshWallAndCornerOptions();
   }
   function fullRefresh() {
     syncEditorHeader();

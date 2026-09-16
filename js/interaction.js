@@ -261,24 +261,28 @@
     const R = currentRoom();
     const o = R ? R.openings.find(x => x.id === selectedOpeningId) : null;
     if (!o) { group.innerHTML = ""; return; }
-    const dims = R.room;
-    const geom = wallGeometry(o.wall, dims);
-    const { s0, s1 } = openingSpan(o, dims);
-    const cornerS = (o.corner === geom.corners[0]) ? 0 : geom.length;
-    const nearS = (o.corner === geom.corners[0]) ? s0 : s1;
-    if (Math.abs(nearS - cornerS) < 0.5) { group.innerHTML = ""; return; }
+    const span = openingSpan(o, R.shape);
+    if (!span) { group.innerHTML = ""; return; }
+    const { seg, s0, s1 } = span;
+    const dStart = s0;
+    const dEnd = seg.length - s1;
+    const nearerToStart = dStart <= dEnd;
+    const cornerS = nearerToStart ? 0 : seg.length;
+    const nearS = nearerToStart ? s0 : s1;
+    const dist = nearerToStart ? dStart : dEnd;
+    if (dist < 0.5) { group.innerHTML = ""; return; }
     const offset = 24;
-    const p1 = pointAt(geom, cornerS);
-    const p2 = pointAt(geom, nearS);
-    const o1 = { x: p1.x + geom.normal.x * offset, y: p1.y + geom.normal.y * offset };
-    const o2 = { x: p2.x + geom.normal.x * offset, y: p2.y + geom.normal.y * offset };
+    const p1 = pointAt(seg, cornerS);
+    const p2 = pointAt(seg, nearS);
+    const o1 = { x: p1.x + seg.normal.x * offset, y: p1.y + seg.normal.y * offset };
+    const o2 = { x: p2.x + seg.normal.x * offset, y: p2.y + seg.normal.y * offset };
     const mid = { x: (o1.x + o2.x) / 2, y: (o1.y + o2.y) / 2 };
     let s = `<line x1="${o1.x}" y1="${o1.y}" x2="${o2.x}" y2="${o2.y}" stroke="#1B4E8F" stroke-width="0.8" stroke-dasharray="2 2"/>`;
     s += `<line x1="${p1.x}" y1="${p1.y}" x2="${o1.x}" y2="${o1.y}" stroke="#1B4E8F" stroke-width="0.6" stroke-dasharray="1 2"/>`;
     s += `<line x1="${p2.x}" y1="${p2.y}" x2="${o2.x}" y2="${o2.y}" stroke="#1B4E8F" stroke-width="0.6" stroke-dasharray="1 2"/>`;
     s += `<g class="opening-measure-label" style="cursor:pointer">
       <rect x="${mid.x - 15}" y="${mid.y - 8}" width="30" height="16" rx="3" fill="#FFFFFF" stroke="#1B4E8F" stroke-width="0.8"/>
-      <text x="${mid.x}" y="${mid.y + 3.5}" text-anchor="middle" font-size="9" fill="#1B4E8F" font-family="Courier New, monospace">${Math.round(o.dist)}</text>
+      <text x="${mid.x}" y="${mid.y + 3.5}" text-anchor="middle" font-size="9" fill="#1B4E8F" font-family="Courier New, monospace">${Math.round(dist)}</text>
     </g>`;
     group.innerHTML = s;
     group.querySelector(".opening-measure-label").addEventListener("pointerdown", (evt) => {
@@ -297,7 +301,10 @@
     measureInput.style.left = (screenX - wrapRect.left - 26) + "px";
     measureInput.style.top = (screenY - wrapRect.top - 11) + "px";
     measureInput.style.display = "block";
-    measureInput.value = Math.round(o.dist);
+    const R = currentRoom();
+    const span = openingSpan(o, R.shape);
+    const dist = span ? Math.round(Math.min(span.s0, span.seg.length - span.s1)) : 0;
+    measureInput.value = dist;
     measureInput.dataset.mode = "opening";
     measureInput.dataset.openingId = o.id;
     measureInput.focus();
@@ -313,11 +320,13 @@
     const o = R.openings.find(x => x.id === id);
     if (!o) return;
     selectOpening(id);
-    const geom = wallGeometry(o.wall, R.room);
+    const span = openingSpan(o, R.shape);
+    if (!span) return;
+    const { seg } = span;
     const p = svgPoint(evt);
-    const pointerS = geom.tangent.x !== 0 ? (p.x - geom.start.x) : (p.y - geom.start.y);
-    const { s0 } = openingSpan(o, R.room);
-    openingDragging = { id, offsetS: pointerS - s0 };
+    const dx = p.x - seg.start.x, dy = p.y - seg.start.y;
+    const pointerS = dx * seg.tangent.x + dy * seg.tangent.y;
+    openingDragging = { id, offsetS: pointerS - o.pos };
     evt.currentTarget.setPointerCapture(evt.pointerId);
     evt.currentTarget.style.cursor = "grabbing";
     svg.addEventListener("pointermove", onOpeningDrag);
@@ -329,15 +338,15 @@
     const R = currentRoom();
     const o = R ? R.openings.find(x => x.id === openingDragging.id) : null;
     if (!o) return;
-    const geom = wallGeometry(o.wall, R.room);
+    const idx = wallIndexById(R.shape, o.wallId);
+    if (idx < 0) return;
+    const seg = getWallSegment(R.shape, idx);
     const p = svgPoint(evt);
-    const pointerS = geom.tangent.x !== 0 ? (p.x - geom.start.x) : (p.y - geom.start.y);
-    let s0 = pointerS - openingDragging.offsetS;
-    s0 = Math.max(0, Math.min(geom.length - o.width, s0));
-    const distFromStart = s0;
-    const distFromEnd = geom.length - (s0 + o.width);
-    if (distFromStart <= distFromEnd) { o.corner = geom.corners[0]; o.dist = Math.round(distFromStart); }
-    else { o.corner = geom.corners[1]; o.dist = Math.round(distFromEnd); }
+    const dx = p.x - seg.start.x, dy = p.y - seg.start.y;
+    const pointerS = dx * seg.tangent.x + dy * seg.tangent.y;
+    let newPos = pointerS - openingDragging.offsetS;
+    newPos = Math.max(0, Math.min(seg.length - o.width, newPos));
+    o.pos = Math.round(newPos);
     const wg = svg.querySelector("#wallsGroup");
     if (wg) wg.innerHTML = wallsSvg(R);
     refreshOpeningVisual(o);
@@ -359,9 +368,15 @@
     if (measureInput.dataset.mode === "opening") {
       const o = R ? R.openings.find(x => x.id === Number(measureInput.dataset.openingId)) : null;
       if (o) {
-        const prev = o.dist;
-        o.dist = Math.max(0, Number(measureInput.value) || 0);
-        if (!openingFits(o, R.room)) { o.dist = prev; }
+        const span = openingSpan(o, R.shape);
+        if (span) {
+          const { seg, s0, s1 } = span;
+          const nearerToStart = s0 <= seg.length - s1;
+          const newDist = Math.max(0, Number(measureInput.value) || 0);
+          const prevPos = o.pos;
+          o.pos = nearerToStart ? newDist : seg.length - newDist - o.width;
+          if (!openingFits(o, R.shape)) { o.pos = prevPos; }
+        }
         render();
         renderOpeningList();
       }

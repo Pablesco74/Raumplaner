@@ -64,16 +64,13 @@
     const newId = nextWallIdFn();
     let id1, id2;
     if (distToStart >= distToEnd) {
-      // start→point ist länger → behält Original-ID
       id1 = originalId;
       id2 = newId;
     } else {
-      // point→end ist länger → behält Original-ID
       id1 = newId;
       id2 = originalId;
     }
 
-    // Vertex einfügen, wallIds aktualisieren
     shape.vertices.splice(wallIndex + 1, 0, { x: point.x, y: point.y });
     shape.wallIds.splice(wallIndex, 1, id1, id2);
 
@@ -90,68 +87,180 @@
       area += verts[i].x * verts[j].y;
       area -= verts[j].x * verts[i].y;
     }
-    return area / 2; // positiv bei CW (Y-down)
+    return area / 2;
   }
 
   /** Prüft, ob ein Shape ein achsenparalleles Rechteck ist (4 Vertices, rechte Winkel). */
   function isAxisAlignedRect(shape) {
     if (!shape || shape.vertices.length !== 4) return false;
     const v = shape.vertices;
-    // Prüfe: alle Kanten achsenparallel
     for (let i = 0; i < 4; i++) {
       const j = (i + 1) % 4;
       const dx = Math.abs(v[j].x - v[i].x);
       const dy = Math.abs(v[j].y - v[i].y);
-      if (dx > 0.1 && dy > 0.1) return false; // Diagonale Kante
+      if (dx > 0.1 && dy > 0.1) return false;
     }
     return true;
   }
 
-// ---------- Geometrie: Wände, Öffnungen, AABB, Snapping ----------
-  function wallGeometry(wall, dims) {
-    const { w, d } = dims;
-    switch (wall) {
-      case "top":    return { start: {x:0,y:0}, end: {x:w,y:0}, tangent:{x:1,y:0}, normal:{x:0,y:1}, length:w, corners:["links","rechts"] };
-      case "bottom": return { start: {x:0,y:d}, end: {x:w,y:d}, tangent:{x:1,y:0}, normal:{x:0,y:-1}, length:w, corners:["links","rechts"] };
-      case "left":   return { start: {x:0,y:0}, end: {x:0,y:d}, tangent:{x:0,y:1}, normal:{x:1,y:0}, length:d, corners:["oben","unten"] };
-      case "right":  return { start: {x:w,y:0}, end: {x:w,y:d}, tangent:{x:0,y:1}, normal:{x:-1,y:0}, length:d, corners:["oben","unten"] };
-    }
-  }
-  function pointAt(geom, s) { return { x: geom.start.x + geom.tangent.x * s, y: geom.start.y + geom.tangent.y * s }; }
+// ---------- Geometrie: Öffnungen + Wände (wallId-basiert, TA 2) ----------
 
-  function openingSpan(opening, dims) {
-    const geom = wallGeometry(opening.wall, dims);
-    let s0, s1;
-    if (opening.corner === geom.corners[0]) { s0 = opening.dist; s1 = s0 + opening.width; }
-    else { s1 = geom.length - opening.dist; s0 = s1 - opening.width; }
-    return { geom, s0, s1 };
+  function pointAt(seg, s) {
+    return { x: seg.start.x + seg.tangent.x * s, y: seg.start.y + seg.tangent.y * s };
   }
 
-  function wallBandRect(wall, s0, s1, dims) {
-    const { w, d } = dims;
-    switch (wall) {
-      case "top":    return { x: s0, y: -WALL_T, width: s1 - s0, height: WALL_T };
-      case "bottom": return { x: s0, y: d, width: s1 - s0, height: WALL_T };
-      case "left":   return { x: -WALL_T, y: s0, width: WALL_T, height: s1 - s0 };
-      case "right":  return { x: w, y: s0, width: WALL_T, height: s1 - s0 };
-    }
+  function openingSpan(opening, shape) {
+    const idx = wallIndexById(shape, opening.wallId);
+    if (idx < 0) return null;
+    const seg = getWallSegment(shape, idx);
+    return { seg: seg, s0: opening.pos, s1: opening.pos + opening.width };
   }
 
-  function openingFits(o, dims) {
-    const geom = wallGeometry(o.wall, dims);
-    return o.dist >= 0 && o.width > 0 && o.dist + o.width <= geom.length;
+  function openingFits(opening, shape) {
+    const idx = wallIndexById(shape, opening.wallId);
+    if (idx < 0) return false;
+    const seg = getWallSegment(shape, idx);
+    return opening.pos >= -0.5 && opening.width > 0 && opening.pos + opening.width <= seg.length + 0.5;
   }
 
-  function openingHitRect(opening, dims) {
-    const { s0, s1 } = openingSpan(opening, dims);
-    const band = wallBandRect(opening.wall, s0, s1, dims);
+  function wallCutoutPath(seg, s0, s1) {
+    const p0 = pointAt(seg, s0), p1 = pointAt(seg, s1);
+    const ox = -seg.normal.x, oy = -seg.normal.y;
+    return `M ${p0.x} ${p0.y} L ${p1.x} ${p1.y} L ${p1.x + ox * WALL_T} ${p1.y + oy * WALL_T} L ${p0.x + ox * WALL_T} ${p0.y + oy * WALL_T} Z`;
+  }
+
+  function openingHitPoly(opening, shape) {
+    const span = openingSpan(opening, shape);
+    if (!span) return null;
+    const { seg, s0, s1 } = span;
     const margin = 22;
-    switch (opening.wall) {
-      case "top":    return { x: band.x, y: band.y, width: band.width, height: band.height + margin };
-      case "bottom": return { x: band.x, y: band.y - margin, width: band.width, height: band.height + margin };
-      case "left":   return { x: band.x, y: band.y, width: band.width + margin, height: band.height };
-      case "right":  return { x: band.x - margin, y: band.y, width: band.width + margin, height: band.height };
+    const p0 = pointAt(seg, s0), p1 = pointAt(seg, s1);
+    const nx = seg.normal.x, ny = seg.normal.y;
+    const ox = -nx, oy = -ny;
+    return [
+      { x: p0.x + nx * margin, y: p0.y + ny * margin },
+      { x: p1.x + nx * margin, y: p1.y + ny * margin },
+      { x: p1.x + ox * WALL_T, y: p1.y + oy * WALL_T },
+      { x: p0.x + ox * WALL_T, y: p0.y + oy * WALL_T }
+    ];
+  }
+
+  function outerWallVertices(shape) {
+    const n = shape.vertices.length;
+    const outer = [];
+    for (let i = 0; i < n; i++) {
+      const V = shape.vertices[i];
+      const prevSeg = getWallSegment(shape, (i - 1 + n) % n);
+      const nextSeg = getWallSegment(shape, i);
+      const on1x = -prevSeg.normal.x, on1y = -prevSeg.normal.y;
+      const on2x = -nextSeg.normal.x, on2y = -nextSeg.normal.y;
+      const mx = on1x + on2x, my = on1y + on2y;
+      const mLen = Math.hypot(mx, my);
+      if (mLen < 0.001) {
+        outer.push({ x: V.x + on1x * WALL_T, y: V.y + on1y * WALL_T });
+      } else {
+        const mNx = mx / mLen, mNy = my / mLen;
+        const dot = on1x * mNx + on1y * mNy;
+        const scale = Math.min(WALL_T / Math.max(dot, 0.05), WALL_T * 4);
+        outer.push({ x: V.x + mNx * scale, y: V.y + mNy * scale });
+      }
     }
+    return outer;
+  }
+
+  function verticesToPath(verts) {
+    return verts.map(function(v, i) { return (i === 0 ? 'M' : 'L') + ' ' + v.x + ' ' + v.y; }).join(' ') + ' Z';
+  }
+
+  function shapeBBox(shape) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (var i = 0; i < shape.vertices.length; i++) {
+      var v = shape.vertices[i];
+      if (v.x < minX) minX = v.x;
+      if (v.x > maxX) maxX = v.x;
+      if (v.y < minY) minY = v.y;
+      if (v.y > maxY) maxY = v.y;
+    }
+    return { minX: minX, maxX: maxX, minY: minY, maxY: maxY };
+  }
+
+  /** Für Rechteck-Räume: UI-Info pro Wand (Label, Ecken-Namen, Richtungszuordnung). */
+  function rectWallUiInfo(shape) {
+    if (!isAxisAlignedRect(shape) || shape.wallIds.length !== 4) return null;
+    return [
+      { wallId: shape.wallIds[0], label: "Oben",   corners: ["links", "rechts"], startIsFirst: true },
+      { wallId: shape.wallIds[1], label: "Rechts", corners: ["oben", "unten"],   startIsFirst: true },
+      { wallId: shape.wallIds[2], label: "Unten",  corners: ["links", "rechts"], startIsFirst: false },
+      { wallId: shape.wallIds[3], label: "Links",  corners: ["oben", "unten"],   startIsFirst: false }
+    ];
+  }
+
+  function cornerDistToPos(wallId, shape, corner, dist, width) {
+    var info = rectWallUiInfo(shape);
+    var idx = wallIndexById(shape, wallId);
+    if (idx < 0) return dist;
+    var seg = getWallSegment(shape, idx);
+    if (info) {
+      var w = info.find(function(i) { return i.wallId === wallId; });
+      if (w) {
+        var isFirst = (corner === w.corners[0]);
+        var isAtStart = w.startIsFirst ? isFirst : !isFirst;
+        return isAtStart ? dist : seg.length - dist - width;
+      }
+    }
+    return (corner === "Start") ? dist : seg.length - dist - width;
+  }
+
+  function posToCornerDist(opening, shape) {
+    var idx = wallIndexById(shape, opening.wallId);
+    if (idx < 0) return { corner: "?", dist: opening.pos };
+    var seg = getWallSegment(shape, idx);
+    var dS = opening.pos, dE = seg.length - opening.pos - opening.width;
+    var info = rectWallUiInfo(shape);
+    if (info) {
+      var w = info.find(function(i) { return i.wallId === opening.wallId; });
+      if (w) {
+        if (dS <= dE) return { corner: w.startIsFirst ? w.corners[0] : w.corners[1], dist: Math.round(dS) };
+        return { corner: w.startIsFirst ? w.corners[1] : w.corners[0], dist: Math.round(dE) };
+      }
+    }
+    return dS <= dE ? { corner: "Start", dist: Math.round(dS) } : { corner: "Ende", dist: Math.round(dE) };
+  }
+
+  function hingeCornerToAtStart(wallId, shape, hingeCorner) {
+    var info = rectWallUiInfo(shape);
+    if (info) {
+      var w = info.find(function(i) { return i.wallId === wallId; });
+      if (w) {
+        var isFirst = (hingeCorner === w.corners[0]);
+        return w.startIsFirst ? isFirst : !isFirst;
+      }
+    }
+    return (hingeCorner === "Start");
+  }
+
+  function hingeAtStartToCorner(opening, shape) {
+    var info = rectWallUiInfo(shape);
+    if (info) {
+      var w = info.find(function(i) { return i.wallId === opening.wallId; });
+      if (w) {
+        if (opening.hingeAtStart) return w.startIsFirst ? w.corners[0] : w.corners[1];
+        return w.startIsFirst ? w.corners[1] : w.corners[0];
+      }
+    }
+    return opening.hingeAtStart ? "Start" : "Ende";
+  }
+
+  function wallLabelForId(wallId, shape) {
+    var info = rectWallUiInfo(shape);
+    if (info) {
+      var w = info.find(function(i) { return i.wallId === wallId; });
+      if (w) return w.label;
+    }
+    var idx = wallIndexById(shape, wallId);
+    if (idx < 0) return "Wand ?";
+    var seg = getWallSegment(shape, idx);
+    return "Wand " + (idx + 1) + " (" + Math.round(seg.length) + " cm)";
   }
 
   // ---------- bounding box + snapping ----------

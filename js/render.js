@@ -21,9 +21,9 @@
   // ---------- main render ----------
   let camera = { scale: 1, x: 0, y: 0 };
   function baseViewBox(R) {
-    const { w, d } = R.room;
+    const bbox = shapeBBox(R.shape);
     const pad = WALL_T + 26;
-    return { x: -pad, y: -pad, w: w + pad * 2, d: d + pad * 2 };
+    return { x: bbox.minX - pad, y: bbox.minY - pad, w: (bbox.maxX - bbox.minX) + pad * 2, d: (bbox.maxY - bbox.minY) + pad * 2 };
   }
   function applyCamera() {
     const R = currentRoom();
@@ -60,7 +60,17 @@
     const { w, d } = R.room;
     svg.innerHTML = "";
 
+    const defs = document.createElementNS(NS, "defs");
+    const clipPath = document.createElementNS(NS, "clipPath");
+    clipPath.id = "floor-clip";
+    const clipPoly = document.createElementNS(NS, "polygon");
+    clipPoly.setAttribute("points", R.shape.vertices.map(v => `${v.x},${v.y}`).join(' '));
+    clipPath.appendChild(clipPoly);
+    defs.appendChild(clipPath);
+    svg.appendChild(defs);
+
     const floorGroup = document.createElementNS(NS, "g");
+    floorGroup.setAttribute("clip-path", "url(#floor-clip)");
     floorGroup.innerHTML = floorSvg(w, d, R.floorType);
     svg.appendChild(floorGroup);
 
@@ -73,7 +83,7 @@
       const g = document.createElementNS(NS, "g");
       g.dataset.openingId = o.id;
       g.style.cursor = "grab";
-      g.innerHTML = openingGroupInner(o, R.room);
+      g.innerHTML = openingGroupInner(o, R.shape);
       g.addEventListener("pointerdown", startOpeningDrag);
       svg.appendChild(g);
     });
