@@ -2,7 +2,7 @@
 // Wird VOR store.js geladen. Definiert die aktuelle Schemaversion,
 // die Migrationskette und die Fehlerbehandlung für beschädigte Daten.
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 let _migrationFailed = false;
 
 // Migrationskette: jede Funktion transformiert Version N → N+1.
@@ -22,10 +22,73 @@ const MIGRATIONS = {
     }
     data.schemaVersion = 2;
     return data;
+  },
+  // Version 2 → 3: Openings: wall/corner/dist/hinge → wallId/pos/hingeAtStart
+  2: function(data) {
+    var wallMap = { top: 0, right: 1, bottom: 2, left: 3 };
+    var wallCorners = {
+      top:    { corners: ["links", "rechts"], startIsFirst: true },
+      right:  { corners: ["oben", "unten"],   startIsFirst: true },
+      bottom: { corners: ["links", "rechts"], startIsFirst: false },
+      left:   { corners: ["oben", "unten"],   startIsFirst: false }
+    };
+    if (data.projects) {
+      data.projects.forEach(function(p) {
+        if (p.rooms) {
+          p.rooms.forEach(function(r) {
+            if (!r.shape) {
+              var w = r.room ? r.room.w : 400;
+              var d = r.room ? r.room.d : 300;
+              r.shape = {
+                vertices: [{x:0,y:0},{x:w,y:0},{x:w,y:d},{x:0,y:d}],
+                wallIds: [1,2,3,4]
+              };
+            }
+            if (!r.nextWallId) {
+              var maxId = 4;
+              for (var k = 0; k < r.shape.wallIds.length; k++) {
+                if (r.shape.wallIds[k] > maxId) maxId = r.shape.wallIds[k];
+              }
+              r.nextWallId = maxId + 1;
+            }
+            if (r.openings) {
+              r.openings = r.openings.map(function(o) {
+                if (o.wallId != null) return o;
+                var wallName = o.wall || "top";
+                var wallIdx = wallMap[wallName];
+                if (wallIdx == null) wallIdx = 0;
+                var wallId = r.shape.wallIds[wallIdx];
+                var v = r.shape.vertices;
+                var n = v.length;
+                var start = v[wallIdx];
+                var end = v[(wallIdx + 1) % n];
+                var segLength = Math.hypot(end.x - start.x, end.y - start.y);
+                var wc = wallCorners[wallName] || wallCorners.top;
+                var corner = o.corner || wc.corners[0];
+                var dist = o.dist || 0;
+                var isFirst = (corner === wc.corners[0]);
+                var isAtStart = wc.startIsFirst ? isFirst : !isFirst;
+                var pos = isAtStart ? dist : segLength - dist - o.width;
+                var hinge = o.hinge || corner;
+                var hingeIsFirst = (hinge === wc.corners[0]);
+                var hingeAtStart = wc.startIsFirst ? hingeIsFirst : !hingeIsFirst;
+                return {
+                  id: o.id,
+                  wallId: wallId,
+                  type: o.type,
+                  width: o.width,
+                  pos: pos,
+                  hingeAtStart: hingeAtStart
+                };
+              });
+            }
+          });
+        }
+      });
+    }
+    data.schemaVersion = 3;
+    return data;
   }
-  // Zukünftige Migrationen hier ergänzen:
-  // 2: function(data) { ...; data.schemaVersion = 3; return data; },
-  // 3: function(data) { ...; data.schemaVersion = 4; return data; },
 };
 
 /**

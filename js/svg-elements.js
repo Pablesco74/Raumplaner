@@ -12,64 +12,70 @@
       <path d="M ${openEnd.x} ${openEnd.y} A ${width} ${width} 0 0 ${sweep} ${other.x} ${other.y}" stroke="${color}" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
     `;
   }
-  function jambTick(geom, s) {
-    const p = pointAt(geom, s);
-    const p2 = { x: p.x - geom.normal.x * WALL_T, y: p.y - geom.normal.y * WALL_T };
+  function jambTick(seg, s) {
+    const p = pointAt(seg, s);
+    const p2 = { x: p.x - seg.normal.x * WALL_T, y: p.y - seg.normal.y * WALL_T };
     return `<line x1="${p.x}" y1="${p.y}" x2="${p2.x}" y2="${p2.y}" stroke="#FFFFFF" stroke-width="1.5"/>`;
   }
 
-  function openingSvg(opening, dims) {
-    const { geom, s0, s1 } = openingSpan(opening, dims);
-    const P0 = pointAt(geom, s0);
-    const P1 = pointAt(geom, s1);
+  function openingSvg(opening, shape) {
+    const span = openingSpan(opening, shape);
+    if (!span) return '';
+    const { seg, s0, s1 } = span;
+    const P0 = pointAt(seg, s0);
+    const P1 = pointAt(seg, s1);
     const color = opening.type === "door" ? "#1B4E8F" : "#2F80C8";
-    let out = jambTick(geom, s0) + jambTick(geom, s1);
+    let out = jambTick(seg, s0) + jambTick(seg, s1);
     if (opening.type === "window-double") {
       const sm = (s0 + s1) / 2;
-      const Pm = pointAt(geom, sm);
+      const Pm = pointAt(seg, sm);
       const halfW = (s1 - s0) / 2;
-      out += jambTick(geom, sm);
-      out += leafAndArcSvg(P0, Pm, geom.normal, halfW, color);
-      out += leafAndArcSvg(P1, Pm, geom.normal, halfW, color);
+      out += jambTick(seg, sm);
+      out += leafAndArcSvg(P0, Pm, seg.normal, halfW, color);
+      out += leafAndArcSvg(P1, Pm, seg.normal, halfW, color);
     } else {
-      const hinge = opening.hinge === geom.corners[0] ? P0 : P1;
-      const other = opening.hinge === geom.corners[0] ? P1 : P0;
-      out += leafAndArcSvg(hinge, other, geom.normal, s1 - s0, color);
+      const hinge = opening.hingeAtStart ? P0 : P1;
+      const other = opening.hingeAtStart ? P1 : P0;
+      out += leafAndArcSvg(hinge, other, seg.normal, s1 - s0, color);
     }
     return out;
   }
+
   function wallsSvg(R) {
-    const dims = R.room;
-    const { w, d } = dims;
-    let out = `<path d="M ${-WALL_T} ${-WALL_T} H ${w + WALL_T} V ${d + WALL_T} H ${-WALL_T} Z
-                       M 0 0 H ${w} V ${d} H 0 Z" fill="#1F3A5C" fill-rule="evenodd"/>`;
-    ["top", "right", "bottom", "left"].forEach(wall => {
-      R.openings.filter(o => o.wall === wall).forEach(o => {
-        const { s0, s1 } = openingSpan(o, dims);
-        const r = wallBandRect(wall, s0, s1, dims);
-        out += `<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}" fill="#FFFFFF"/>`;
-      });
+    const shape = R.shape;
+    const outer = outerWallVertices(shape);
+    const outerPath = verticesToPath(outer);
+    const innerPath = verticesToPath(shape.vertices);
+    let out = `<path d="${outerPath} ${innerPath}" fill="#1F3A5C" fill-rule="evenodd"/>`;
+    R.openings.forEach(o => {
+      const span = openingSpan(o, shape);
+      if (!span) return;
+      out += `<path d="${wallCutoutPath(span.seg, span.s0, span.s1)}" fill="#FFFFFF"/>`;
     });
     return out;
   }
 
-  function openingGroupInner(opening, dims) {
+  function openingGroupInner(opening, shape) {
     const selected = opening.id === selectedOpeningId;
-    const hit = openingHitRect(opening, dims);
-    let s = `<rect x="${hit.x}" y="${hit.y}" width="${hit.width}" height="${hit.height}" fill="transparent" pointer-events="all"/>`;
+    const hitPoly = openingHitPoly(opening, shape);
+    if (!hitPoly) return '';
+    const hitPoints = hitPoly.map(p => `${p.x},${p.y}`).join(' ');
+    let s = `<polygon points="${hitPoints}" fill="transparent" pointer-events="all"/>`;
     if (selected) {
-      const { s0, s1 } = openingSpan(opening, dims);
-      const band = wallBandRect(opening.wall, s0, s1, dims);
-      s += `<rect x="${band.x - 2}" y="${band.y - 2}" width="${band.width + 4}" height="${band.height + 4}" fill="none" stroke="#1B4E8F" stroke-width="1.5" stroke-dasharray="3 2" rx="2"/>`;
+      const span = openingSpan(opening, shape);
+      if (span) {
+        s += `<path d="${wallCutoutPath(span.seg, span.s0, span.s1)}" fill="none" stroke="#1B4E8F" stroke-width="2.5" stroke-dasharray="3 2"/>`;
+      }
     }
-    s += openingSvg(opening, dims);
+    s += openingSvg(opening, shape);
     return s;
   }
+
   function refreshOpeningVisual(o) {
     const R = currentRoom();
     if (!R) return;
     const g = svg.querySelector(`g[data-opening-id="${o.id}"]`);
-    if (g) g.innerHTML = openingGroupInner(o, R.room);
+    if (g) g.innerHTML = openingGroupInner(o, R.shape);
   }
 
   // ---------- furniture recognition + illustration ----------
@@ -177,7 +183,6 @@
       case "wardrobe": body = wardrobeIcon(item); break;
       default: body = genericIcon(item);
     }
-    // Label: links unten im Möbelstück, gegen-rotiert damit es horizontal lesbar bleibt
     const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.13), 12);
     const lx = item.x + 3;
     const ly = item.y + item.d - 4;
@@ -192,4 +197,3 @@
       : "";
     return body + selOutline + furnitureDoorsSvg(item) + lockIcon + label;
   }
-

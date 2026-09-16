@@ -12,13 +12,7 @@ const MEASURE_SNAP_DIST = 12; // Pixel in SVG-Koordinaten
 function measureToolSnapPoints() {
   const R = currentRoom();
   if (!R) return [];
-  const { w, d } = R.room;
-  // Raumecken
-  const pts = [
-    { x: 0, y: 0 }, { x: w, y: 0 },
-    { x: w, y: d }, { x: 0, y: d }
-  ];
-  // Möbelecken (nach Rotation = AABB-Ecken)
+  const pts = R.shape.vertices.map(v => ({ x: v.x, y: v.y }));
   R.items.forEach(item => {
     const box = getAABB(item);
     pts.push(
@@ -26,11 +20,11 @@ function measureToolSnapPoints() {
       { x: box.maxX, y: box.maxY }, { x: box.minX, y: box.maxY }
     );
   });
-  // Öffnungs-Endpunkte
   R.openings.forEach(o => {
-    const { geom, s0, s1 } = openingSpan(o, R.room);
-    pts.push(pointAt(geom, s0));
-    pts.push(pointAt(geom, s1));
+    const span = openingSpan(o, R.shape);
+    if (!span) return;
+    pts.push(pointAt(span.seg, span.s0));
+    pts.push(pointAt(span.seg, span.s1));
   });
   return pts;
 }
