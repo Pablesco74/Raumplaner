@@ -237,6 +237,18 @@
     background: var(--amber); color: var(--amber-dark); border-color: var(--amber);
   }
 
+  .variant-tabs {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px;
+  }
+  .variant-tab {
+    background: var(--navy-2); border: 1px solid var(--line); color: var(--cream);
+    font-size: 12px; padding: 5px 12px; border-radius: 4px; cursor: pointer;
+    font-weight: 500;
+  }
+  .variant-tab.active {
+    background: var(--amber); color: var(--amber-dark); border-color: var(--amber);
+  }
+
   .shape-wall-table {
     width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px;
   }

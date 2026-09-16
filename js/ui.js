@@ -235,8 +235,77 @@
   });
 
   document.getElementById("floorType").addEventListener("change", (evt) => {
-    currentRoom().floorType = evt.target.value;
+    const R = currentRoom();
+    R.floorType = evt.target.value;
+    saveCurrentVariant(R);
     render();
+  });
+
+  // ---------- Varianten ----------
+  function renderVariantTabs() {
+    const R = currentRoom();
+    const container = document.getElementById("variantTabs");
+    if (!R || !container) return;
+    ensureVariants(R);
+    container.innerHTML = "";
+    R.variants.forEach(function(v, idx) {
+      var btn = document.createElement("button");
+      btn.className = "variant-tab" + (idx === (R.currentVariantIdx || 0) ? " active" : "");
+      btn.textContent = v.name;
+      btn.addEventListener("click", function() {
+        loadVariant(R, idx);
+        document.getElementById("floorType").value = R.floorType;
+        render();
+        renderFurnitureList();
+        renderVariantTabs();
+        saveStoreNow();
+      });
+      btn.addEventListener("dblclick", function() {
+        var newName = prompt("Variante umbenennen:", v.name);
+        if (newName && newName.trim()) {
+          v.name = newName.trim();
+          renderVariantTabs();
+          saveStoreNow();
+        }
+      });
+      container.appendChild(btn);
+    });
+  }
+  function showVariantMsg(text) {
+    var el = document.getElementById("variantMsg");
+    el.textContent = text;
+    el.style.display = "block";
+    setTimeout(function() { el.style.display = "none"; }, 3000);
+  }
+  document.getElementById("variantAdd").addEventListener("click", function() {
+    var R = currentRoom();
+    if (!R) return;
+    addVariant(R);
+    render();
+    renderFurnitureList();
+    renderVariantTabs();
+    saveStoreNow();
+  });
+  document.getElementById("variantDuplicate").addEventListener("click", function() {
+    var R = currentRoom();
+    if (!R) return;
+    duplicateVariant(R);
+    render();
+    renderFurnitureList();
+    renderVariantTabs();
+    saveStoreNow();
+  });
+  document.getElementById("variantDelete").addEventListener("click", function() {
+    var R = currentRoom();
+    if (!R) return;
+    ensureVariants(R);
+    if (R.variants.length <= 1) { showVariantMsg("Letzte Variante kann nicht gelöscht werden."); return; }
+    if (!confirm("Variante \"" + R.variants[R.currentVariantIdx || 0].name + "\" wirklich löschen?")) return;
+    deleteVariant(R, R.currentVariantIdx || 0);
+    render();
+    renderFurnitureList();
+    renderVariantTabs();
+    saveStoreNow();
   });
 
   // ---------- inline name editing (Doppelklick, sofort gespeichert) ----------
@@ -556,6 +625,7 @@
     document.getElementById("floorType").value = R.floorType;
     refreshWallAndCornerOptions();
     renderShapeTable();
+    renderVariantTabs();
   }
   function fullRefresh() {
     syncEditorHeader();
