@@ -263,6 +263,26 @@
     return "Wand " + (idx + 1) + " (" + Math.round(seg.length) + " cm)";
   }
 
+  /** Findet die nächstgelegene Wand zu einem Punkt (Punkt-zu-Segment-Abstand). */
+  function nearestWallForPoint(shape, point) {
+    var bestIdx = 0, bestDist = Infinity, bestPos = 0;
+    for (var i = 0; i < shape.vertices.length; i++) {
+      var seg = getWallSegment(shape, i);
+      var dx = point.x - seg.start.x, dy = point.y - seg.start.y;
+      var t = dx * seg.tangent.x + dy * seg.tangent.y;
+      var ct = Math.max(0, Math.min(seg.length, t));
+      var px = seg.start.x + seg.tangent.x * ct;
+      var py = seg.start.y + seg.tangent.y * ct;
+      var dist = Math.hypot(point.x - px, point.y - py);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+        bestPos = ct;
+      }
+    }
+    return { wallIdx: bestIdx, wallId: shape.wallIds[bestIdx], pos: bestPos, distance: bestDist };
+  }
+
   // ---------- bounding box + snapping ----------
   function getAABB(item) {
     const cx = item.x + item.w / 2;
