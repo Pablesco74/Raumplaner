@@ -1,3 +1,53 @@
+// ---------- Vertex-Drag (TA 4) ----------
+  let vertexDragging = null;
+
+  function startVertexDrag(evt) {
+    evt.stopPropagation();
+    if (measureToolActive) return;
+    const R = currentRoom();
+    if (!R) return;
+    const idx = Number(evt.currentTarget.dataset.vertex);
+    const p = svgPoint(evt);
+    vertexDragging = { idx: idx, offsetX: p.x - R.shape.vertices[idx].x, offsetY: p.y - R.shape.vertices[idx].y };
+    evt.currentTarget.setPointerCapture(evt.pointerId);
+    svg.addEventListener("pointermove", onVertexDrag);
+    svg.addEventListener("pointerup", endVertexDrag);
+    svg.addEventListener("pointercancel", endVertexDrag);
+  }
+
+  function onVertexDrag(evt) {
+    if (!vertexDragging) return;
+    const R = currentRoom();
+    if (!R) return;
+    const p = svgPoint(evt);
+    var rawX = p.x - vertexDragging.offsetX;
+    var rawY = p.y - vertexDragging.offsetY;
+    var n = R.shape.vertices.length;
+    var prevIdx = (vertexDragging.idx - 1 + n) % n;
+    var anchor = R.shape.vertices[prevIdx];
+    var snapped = snapVertexAngle({ x: rawX, y: rawY }, anchor);
+    R.shape.vertices[vertexDragging.idx] = { x: Math.round(snapped.x), y: Math.round(snapped.y) };
+    updateRoomDimsFromShape(R);
+    render();
+    renderShapeTable();
+  }
+
+  function endVertexDrag() {
+    vertexDragging = null;
+    svg.removeEventListener("pointermove", onVertexDrag);
+    svg.removeEventListener("pointerup", endVertexDrag);
+    svg.removeEventListener("pointercancel", endVertexDrag);
+    const R = currentRoom();
+    if (R) {
+      R.openings = R.openings.filter(function(o) { return openingFits(o, R.shape); });
+    }
+    render();
+    renderOpeningList();
+    renderShapeTable();
+    renderRoomSidebarList();
+    saveStoreNow();
+  }
+
 // ---------- Zoom (Mausrad) & Pan (rechte Maustaste / Touch) ----------
   let mousePan = null;
   const activeTouches = new Map();

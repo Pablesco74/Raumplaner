@@ -124,8 +124,31 @@
     updateRotateButton();
     updateMeasureGuides();
     updateOpeningMeasure();
+    renderVertexHandles();
     applyCamera();
     saveStore();
+  }
+
+  function renderVertexHandles() {
+    let group = svg.querySelector("#vertexHandleGroup");
+    if (!group) {
+      group = document.createElementNS(NS, "g");
+      group.id = "vertexHandleGroup";
+      svg.appendChild(group);
+    }
+    const section = document.getElementById("shapeSection");
+    if (!section || !section.open) { group.innerHTML = ""; return; }
+    const R = currentRoom();
+    if (!R) { group.innerHTML = ""; return; }
+    let s = "";
+    R.shape.vertices.forEach((v, i) => {
+      s += `<circle cx="${v.x}" cy="${v.y}" r="6" fill="#E8A33D" stroke="#FFFFFF" stroke-width="1.5"
+             data-vertex="${i}" style="cursor:move; pointer-events:all"/>`;
+    });
+    group.innerHTML = s;
+    group.querySelectorAll("[data-vertex]").forEach(el => {
+      el.addEventListener("pointerdown", startVertexDrag);
+    });
   }
 
 

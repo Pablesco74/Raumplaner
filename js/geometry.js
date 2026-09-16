@@ -263,6 +263,76 @@
     return "Wand " + (idx + 1) + " (" + Math.round(seg.length) + " cm)";
   }
 
+  /** Wandrichtung in Grad (0° = rechts, 90° = unten). */
+  function wallDirectionDeg(shape, idx) {
+    var seg = getWallSegment(shape, idx);
+    return Math.atan2(seg.tangent.y, seg.tangent.x) * 180 / Math.PI;
+  }
+
+  /** Innenwinkel am Vertex in Grad. */
+  function interiorAngleDeg(shape, vertexIdx) {
+    var n = shape.vertices.length;
+    if (n < 3) return 0;
+    var prevIdx = (vertexIdx - 1 + n) % n;
+    var dir1 = wallDirectionDeg(shape, prevIdx) * Math.PI / 180;
+    var dir2 = wallDirectionDeg(shape, vertexIdx) * Math.PI / 180;
+    var turn = dir2 - dir1;
+    while (turn > Math.PI) turn -= 2 * Math.PI;
+    while (turn <= -Math.PI) turn += 2 * Math.PI;
+    return Math.round((Math.PI - turn) * 180 / Math.PI);
+  }
+
+  /** Ändert die Länge einer Wand — nur der End-Vertex verschiebt sich. */
+  function setWallLength(shape, wallIdx, newLength) {
+    var seg = getWallSegment(shape, wallIdx);
+    var diff = newLength - seg.length;
+    var endIdx = (wallIdx + 1) % shape.vertices.length;
+    shape.vertices[endIdx] = {
+      x: Math.round(shape.vertices[endIdx].x + seg.tangent.x * diff),
+      y: Math.round(shape.vertices[endIdx].y + seg.tangent.y * diff)
+    };
+  }
+
+  /** Entfernt einen Vertex (min. 3 Ecken bleiben). Gibt die gelöschte wallId zurück. */
+  function removeShapeVertex(shape, vertexIdx) {
+    if (shape.vertices.length <= 3) return null;
+    var removedWallId = shape.wallIds[vertexIdx];
+    shape.vertices.splice(vertexIdx, 1);
+    shape.wallIds.splice(vertexIdx, 1);
+    return removedWallId;
+  }
+
+  /** Fügt einen Vertex in die Mitte der gegebenen Wand ein. */
+  function addVertexOnWall(shape, wallIdx, nextWallIdFn) {
+    var seg = getWallSegment(shape, wallIdx);
+    var midPoint = {
+      x: Math.round((seg.start.x + seg.end.x) / 2),
+      y: Math.round((seg.start.y + seg.end.y) / 2)
+    };
+    return splitWall(shape, wallIdx, midPoint, nextWallIdFn);
+  }
+
+  /** Winkel-Snap: projiziert rawPos auf nächsten 15°-Strahl ab anchor. */
+  function snapVertexAngle(rawPos, anchorPos) {
+    var dx = rawPos.x - anchorPos.x, dy = rawPos.y - anchorPos.y;
+    var rawAngle = Math.atan2(dy, dx);
+    var snapInc = Math.PI / 12;
+    var snappedAngle = Math.round(rawAngle / snapInc) * snapInc;
+    if (Math.abs(rawAngle - snappedAngle) > snapInc / 3) return rawPos;
+    var dist = Math.hypot(dx, dy);
+    return {
+      x: Math.round(anchorPos.x + Math.cos(snappedAngle) * dist),
+      y: Math.round(anchorPos.y + Math.sin(snappedAngle) * dist)
+    };
+  }
+
+  /** Aktualisiert room.room.{w,d} aus dem Bounding-Box des Shapes. */
+  function updateRoomDimsFromShape(room) {
+    var bbox = shapeBBox(room.shape);
+    room.room.w = Math.round(bbox.maxX - bbox.minX);
+    room.room.d = Math.round(bbox.maxY - bbox.minY);
+  }
+
   /** Findet die nächstgelegene Wand zu einem Punkt (Punkt-zu-Segment-Abstand). */
   function nearestWallForPoint(shape, point) {
     var bestIdx = 0, bestDist = Infinity, bestPos = 0;

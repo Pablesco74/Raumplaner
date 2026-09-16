@@ -236,3 +236,22 @@
   .apt-floor-tab.active {
     background: var(--amber); color: var(--amber-dark); border-color: var(--amber);
   }
+
+  .shape-wall-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px;
+  }
+  .shape-wall-table th {
+    text-align: left; font-weight: 600; color: var(--cream-dim);
+    padding: 3px 4px; border-bottom: 1px solid var(--line-soft);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .shape-wall-table td {
+    padding: 3px 4px; border-bottom: 1px solid var(--line-soft);
+  }
+  .shape-wall-table input[type="number"] {
+    width: 68px; font-size: 12px; padding: 3px 4px;
+    border: 1px solid var(--line); border-radius: 3px;
+    background: var(--navy-1); color: var(--cream);
+    font-family: 'Courier New', monospace;
+  }
+  .shape-wall-table .dim { color: var(--cream-dim); font-size: 11px; }

@@ -455,12 +455,107 @@
     fullRefresh();
   });
 
+  // ---------- Raumform-Editor (TA 4) ----------
+  function renderShapeTable() {
+    const el = document.getElementById("shapeWallTable");
+    if (!el) return;
+    const R = currentRoom();
+    if (!R) { el.innerHTML = ""; return; }
+    const shape = R.shape;
+    const n = shape.vertices.length;
+    let html = '<table class="shape-wall-table"><tr><th>Wand</th><th>Länge</th><th>Winkel</th></tr>';
+    for (var i = 0; i < n; i++) {
+      var seg = getWallSegment(shape, i);
+      var angle = interiorAngleDeg(shape, (i + 1) % n);
+      html += '<tr>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td><input type="number" data-shapelen="' + i + '" value="' + Math.round(seg.length) + '" min="20" max="2000" step="1"></td>';
+      html += '<td class="dim">' + angle + '°</td>';
+      html += '</tr>';
+    }
+    html += '</table>';
+    el.innerHTML = html;
+    el.querySelectorAll("[data-shapelen]").forEach(function(input) {
+      input.addEventListener("change", function() {
+        var R2 = currentRoom();
+        if (!R2) return;
+        var wallIdx = Number(input.dataset.shapelen);
+        var newLen = Math.max(20, Number(input.value) || 20);
+        setWallLength(R2.shape, wallIdx, newLen);
+        updateRoomDimsFromShape(R2);
+        R2.openings = R2.openings.filter(function(o) { return openingFits(o, R2.shape); });
+        camera = { scale: 1, x: 0, y: 0 };
+        render();
+        renderShapeTable();
+        renderOpeningList();
+        renderRoomSidebarList();
+        saveStoreNow();
+      });
+    });
+  }
+
+  function showShapeMsg(text) {
+    var el = document.getElementById("shapeMsg");
+    el.textContent = text;
+    el.style.display = "block";
+    setTimeout(function() { el.style.display = "none"; }, 3000);
+  }
+
+  document.getElementById("shapeAddVertex").addEventListener("click", function() {
+    var R = currentRoom();
+    if (!R) return;
+    var shape = R.shape;
+    var longestIdx = 0, longestLen = 0;
+    for (var i = 0; i < shape.vertices.length; i++) {
+      var seg = getWallSegment(shape, i);
+      if (seg.length > longestLen) { longestLen = seg.length; longestIdx = i; }
+    }
+    addVertexOnWall(shape, longestIdx, function() { return R.nextWallId++; });
+    updateRoomDimsFromShape(R);
+    camera = { scale: 1, x: 0, y: 0 };
+    render();
+    renderShapeTable();
+    renderOpeningList();
+    renderRoomSidebarList();
+    saveStoreNow();
+  });
+
+  document.getElementById("shapeRemoveVertex").addEventListener("click", function() {
+    var R = currentRoom();
+    if (!R) return;
+    if (R.shape.vertices.length <= 3) { showShapeMsg("Mindestens 3 Ecken nötig."); return; }
+    var n = R.shape.vertices.length;
+    var shortestIdx = 0, shortestLen = Infinity;
+    for (var i = 0; i < n; i++) {
+      var seg = getWallSegment(R.shape, i);
+      if (seg.length < shortestLen) { shortestLen = seg.length; shortestIdx = i; }
+    }
+    var endIdx = (shortestIdx + 1) % n;
+    var removedWallId = removeShapeVertex(R.shape, endIdx);
+    if (removedWallId != null) {
+      R.openings = R.openings.filter(function(o) { return o.wallId !== removedWallId && openingFits(o, R.shape); });
+    }
+    updateRoomDimsFromShape(R);
+    camera = { scale: 1, x: 0, y: 0 };
+    render();
+    renderShapeTable();
+    renderOpeningList();
+    renderRoomSidebarList();
+    saveStoreNow();
+  });
+
+  document.getElementById("shapeSection").addEventListener("toggle", function() {
+    renderVertexHandles();
+    renderShapeTable();
+  });
+
   // ---------- sync UI when switching project/room ----------
   function syncRoomBarInputs() {
     const R = currentRoom();
     if (!R) return;
     document.getElementById("floorType").value = R.floorType;
     refreshWallAndCornerOptions();
+    renderShapeTable();
   }
   function fullRefresh() {
     syncEditorHeader();
