@@ -678,6 +678,7 @@
   const editorView = document.getElementById("editorView");
 
   function showLanding() {
+    closeSheet();
     closeDrawer();
     editorView.style.display = "none";
     landingView.style.display = "block";
@@ -1056,5 +1057,48 @@
 
   // Sicherheitsnetz: beim Schließen des Tabs sofort speichern
   window.addEventListener("beforeunload", saveStoreNow);
+
+  // ---------- Bottom Sheet ----------
+  let activeSheet = null;
+
+  function openSheet(toolName) {
+    if (activeSheet === toolName) { closeSheet(); return; }
+    document.querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
+    var panelId = 'bs' + toolName.charAt(0).toUpperCase() + toolName.slice(1);
+    var panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.style.display = 'block';
+    document.getElementById('bottomSheet').classList.add('open');
+    document.getElementById('bsOverlay').classList.add('open');
+    document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
+    var btn = document.querySelector('[data-tool="' + toolName + '"]');
+    if (btn) btn.classList.add('active');
+    activeSheet = toolName;
+    if (toolName === 'furniture') renderFurnitureList();
+  }
+
+  function closeSheet() {
+    document.getElementById('bottomSheet').classList.remove('open');
+    document.getElementById('bsOverlay').classList.remove('open');
+    document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
+    activeSheet = null;
+  }
+
+  document.querySelectorAll('.tool-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var tool = btn.dataset.tool;
+      if (tool === 'measure') {
+        closeSheet();
+        toggleMeasureTool();
+        btn.classList.toggle('active', measureToolActive);
+        return;
+      }
+      openSheet(tool);
+    });
+  });
+
+  document.getElementById('bsOverlay').addEventListener('click', closeSheet);
+  document.getElementById('undoBtnBar').addEventListener('click', undo);
+  document.getElementById('redoBtnBar').addEventListener('click', redo);
 
   if (!_migrationFailed) showLanding();
