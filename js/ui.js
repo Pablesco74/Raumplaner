@@ -613,10 +613,6 @@
     saveStoreNow();
   });
 
-  document.getElementById("shapeSection").addEventListener("toggle", function() {
-    renderVertexHandles();
-    renderShapeTable();
-  });
 
   // ---------- sync UI when switching project/room ----------
   function syncRoomBarInputs() {
@@ -1075,13 +1071,18 @@
     if (btn) btn.classList.add('active');
     activeSheet = toolName;
     if (toolName === 'furniture') renderFurnitureList();
+    if (toolName === 'openings') { refreshWallAndCornerOptions(); renderOpeningList(); }
+    if (toolName === 'room') { renderShapeTable(); renderVertexHandles(); }
   }
 
   function closeSheet() {
+    var wasRoom = activeSheet === 'room';
     document.getElementById('bottomSheet').classList.remove('open');
     document.getElementById('bsOverlay').classList.remove('open');
     document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
     activeSheet = null;
+    if (wasRoom) renderVertexHandles();
   }
 
   document.querySelectorAll('.tool-btn').forEach(function(btn) {

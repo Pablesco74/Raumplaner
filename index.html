@@ -96,6 +96,82 @@
         <div id="furnitureList"></div>
       </div>
     </div>
+
+    <div class="bs-panel" id="bsOpenings">
+      <div class="bs-title">Türen &amp; Fenster</div>
+      <div class="card">
+        <h3>Tür / Fenster hinzufügen</h3>
+        <div class="add-form">
+          <div class="field">
+            <label>Wand</label>
+            <select id="oWall">
+              <option value="top">Oben</option>
+              <option value="right">Rechts</option>
+              <option value="bottom">Unten</option>
+              <option value="left">Links</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Typ</label>
+            <select id="oType">
+              <option value="door">Tür</option>
+              <option value="window-single">Fenster (einfach)</option>
+              <option value="window-double">Fenster (doppelt)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Breite (cm)</label>
+            <input type="number" id="oWidth" value="90" min="20" max="500" step="1">
+          </div>
+          <div class="field">
+            <label>Ecke</label>
+            <select id="oCorner"></select>
+          </div>
+          <div class="field">
+            <label>Abstand (cm)</label>
+            <input type="number" id="oDist" value="20" min="0" max="1500" step="1">
+          </div>
+          <div class="field" id="oHingeField">
+            <label>Anschlag</label>
+            <select id="oHinge"></select>
+          </div>
+          <button id="addOpening">+ Hinzufügen</button>
+        </div>
+        <p class="error-msg" id="oError"></p>
+      </div>
+      <div class="card">
+        <h3>Bestehende Türen &amp; Fenster</h3>
+        <div id="openingList"></div>
+      </div>
+    </div>
+
+    <div class="bs-panel" id="bsRoom">
+      <div class="bs-title">Raum</div>
+      <div class="card">
+        <h3>Bodenbelag</h3>
+        <div class="add-form">
+          <div class="field">
+            <label>Anzeige</label>
+            <select id="floorType">
+              <option value="raster" selected>Raster</option>
+              <option value="holz">Parkett</option>
+              <option value="fliese">Fliesen</option>
+              <option value="teppich">Teppich</option>
+              <option value="leer">Kein Boden</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="shapeSection">
+        <h3>Wände &amp; Ecken</h3>
+        <div id="shapeWallTable"></div>
+        <div class="add-form" style="margin-top:8px; gap:6px;">
+          <button id="shapeAddVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Ecke hinzufügen</button>
+          <button id="shapeRemoveVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">− Ecke entfernen</button>
+        </div>
+        <p class="error-msg" id="shapeMsg"></p>
+      </div>
+    </div>
   </div>
 
   <div class="bottom-toolbar" id="bottomToolbar">
@@ -153,85 +229,6 @@
     </div>
   </details>
 
-  <details class="cat-section">
-    <summary>Boden</summary>
-    <div class="card">
-      <h3>Bodenbelag</h3>
-      <div class="add-form">
-        <div class="field">
-          <label>Anzeige</label>
-          <select id="floorType">
-            <option value="raster" selected>Raster</option>
-            <option value="holz">Parkett</option>
-            <option value="fliese">Fliesen</option>
-            <option value="teppich">Teppich</option>
-            <option value="leer">Kein Boden</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </details>
-
-  <details class="cat-section" id="shapeSection">
-    <summary>Raumform</summary>
-    <div class="card">
-      <h3>Wände &amp; Ecken</h3>
-      <div id="shapeWallTable"></div>
-      <div class="add-form" style="margin-top:8px; gap:6px;">
-        <button id="shapeAddVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Ecke hinzufügen</button>
-        <button id="shapeRemoveVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">− Ecke entfernen</button>
-      </div>
-      <p class="error-msg" id="shapeMsg"></p>
-    </div>
-  </details>
-
-  <details class="cat-section">
-    <summary>Türen &amp; Fenster</summary>
-    <div class="card">
-      <h3>Tür / Fenster hinzufügen</h3>
-      <div class="add-form">
-        <div class="field">
-          <label>Wand</label>
-          <select id="oWall">
-            <option value="top">Oben</option>
-            <option value="right">Rechts</option>
-            <option value="bottom">Unten</option>
-            <option value="left">Links</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Typ</label>
-          <select id="oType">
-            <option value="door">Tür</option>
-            <option value="window-single">Fenster (einfach)</option>
-            <option value="window-double">Fenster (doppelt)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Breite (cm)</label>
-          <input type="number" id="oWidth" value="90" min="20" max="500" step="1">
-        </div>
-        <div class="field">
-          <label>Ecke</label>
-          <select id="oCorner"></select>
-        </div>
-        <div class="field">
-          <label>Abstand (cm)</label>
-          <input type="number" id="oDist" value="20" min="0" max="1500" step="1">
-        </div>
-        <div class="field" id="oHingeField">
-          <label>Anschlag</label>
-          <select id="oHinge"></select>
-        </div>
-        <button id="addOpening">+ Hinzufügen</button>
-      </div>
-      <p class="error-msg" id="oError"></p>
-    </div>
-    <div class="card">
-      <h3>Bestehende Türen &amp; Fenster</h3>
-      <div id="openingList"></div>
-    </div>
-  </details>
 
 
 </div>
