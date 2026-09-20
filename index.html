@@ -46,6 +46,11 @@
   <div class="canvas-wrap">
     <svg id="plan" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
     <input type="number" id="measureInput" class="measure-input" style="display:none;">
+    <div class="opening-palette" id="openingPalette">
+      <button data-palette-type="door" title="Tür auf Grundriss ziehen">🚪</button>
+      <button data-palette-type="window-single" title="Fenster auf Grundriss ziehen">🪟</button>
+      <button data-palette-type="window-double" title="Doppelfenster auf Grundriss ziehen">🪟🪟</button>
+    </div>
     <button id="measureToolBtn" class="measure-tool-btn" title="Messwerkzeug aktivieren">📏</button>
     <div class="legend">
       <span class="lk"><span class="sw" style="background:#1F3A5C"></span>Wand</span>
@@ -86,6 +91,20 @@
     </div>
   </details>
 
+  <details class="cat-section" open>
+    <summary>Varianten</summary>
+    <div class="card">
+      <h3>Einrichtungsvarianten</h3>
+      <div id="variantTabs" class="variant-tabs"></div>
+      <div class="add-form" style="margin-top:8px; gap:6px;">
+        <button id="variantAdd" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Neue Variante</button>
+        <button id="variantDuplicate" class="ghost-btn" style="font-size:12px; padding:7px 10px;">⧉ Duplizieren</button>
+        <button id="variantDelete" class="ghost-btn" style="font-size:12px; padding:7px 10px; color:#C0392B;">− Löschen</button>
+      </div>
+      <p class="error-msg" id="variantMsg"></p>
+    </div>
+  </details>
+
   <details class="cat-section">
     <summary>Boden</summary>
     <div class="card">
@@ -102,6 +121,19 @@
           </select>
         </div>
       </div>
+    </div>
+  </details>
+
+  <details class="cat-section" id="shapeSection">
+    <summary>Raumform</summary>
+    <div class="card">
+      <h3>Wände &amp; Ecken</h3>
+      <div id="shapeWallTable"></div>
+      <div class="add-form" style="margin-top:8px; gap:6px;">
+        <button id="shapeAddVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Ecke hinzufügen</button>
+        <button id="shapeRemoveVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">− Ecke entfernen</button>
+      </div>
+      <p class="error-msg" id="shapeMsg"></p>
     </div>
   </details>
 

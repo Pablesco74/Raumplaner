@@ -1,3 +1,53 @@
+// ---------- Vertex-Drag (TA 4) ----------
+  let vertexDragging = null;
+
+  function startVertexDrag(evt) {
+    evt.stopPropagation();
+    if (measureToolActive) return;
+    const R = currentRoom();
+    if (!R) return;
+    const idx = Number(evt.currentTarget.dataset.vertex);
+    const p = svgPoint(evt);
+    vertexDragging = { idx: idx, offsetX: p.x - R.shape.vertices[idx].x, offsetY: p.y - R.shape.vertices[idx].y };
+    evt.currentTarget.setPointerCapture(evt.pointerId);
+    svg.addEventListener("pointermove", onVertexDrag);
+    svg.addEventListener("pointerup", endVertexDrag);
+    svg.addEventListener("pointercancel", endVertexDrag);
+  }
+
+  function onVertexDrag(evt) {
+    if (!vertexDragging) return;
+    const R = currentRoom();
+    if (!R) return;
+    const p = svgPoint(evt);
+    var rawX = p.x - vertexDragging.offsetX;
+    var rawY = p.y - vertexDragging.offsetY;
+    var n = R.shape.vertices.length;
+    var prevIdx = (vertexDragging.idx - 1 + n) % n;
+    var anchor = R.shape.vertices[prevIdx];
+    var snapped = snapVertexAngle({ x: rawX, y: rawY }, anchor);
+    R.shape.vertices[vertexDragging.idx] = { x: Math.round(snapped.x), y: Math.round(snapped.y) };
+    updateRoomDimsFromShape(R);
+    render();
+    renderShapeTable();
+  }
+
+  function endVertexDrag() {
+    vertexDragging = null;
+    svg.removeEventListener("pointermove", onVertexDrag);
+    svg.removeEventListener("pointerup", endVertexDrag);
+    svg.removeEventListener("pointercancel", endVertexDrag);
+    const R = currentRoom();
+    if (R) {
+      R.openings = R.openings.filter(function(o) { return openingFits(o, R.shape); });
+    }
+    render();
+    renderOpeningList();
+    renderShapeTable();
+    renderRoomSidebarList();
+    saveStoreNow();
+  }
+
 // ---------- Zoom (Mausrad) & Pan (rechte Maustaste / Touch) ----------
   let mousePan = null;
   const activeTouches = new Map();
@@ -362,6 +412,105 @@
     saveStoreNow();
   }
 
+  // ---------- Öffnungen per Drag & Drop auf Grundriss platzieren (TA 3) ----------
+  let openingPlacement = null;
+
+  function defaultOpeningWidth(type) {
+    return type === 'window-double' ? 120 : 90;
+  }
+
+  function startOpeningPlacement(evt) {
+    evt.preventDefault();
+    if (measureToolActive) return;
+    const type = evt.currentTarget.dataset.paletteType;
+    const width = defaultOpeningWidth(type);
+    openingPlacement = { type, width };
+    document.addEventListener('pointermove', onOpeningPlacement);
+    document.addEventListener('pointerup', endOpeningPlacement);
+    document.addEventListener('pointercancel', cancelOpeningPlacement);
+    document.body.style.cursor = 'crosshair';
+  }
+
+  function onOpeningPlacement(evt) {
+    if (!openingPlacement) return;
+    const R = currentRoom();
+    if (!R) { removeOpeningPreview(); return; }
+    const svgRect = svg.getBoundingClientRect();
+    if (evt.clientX < svgRect.left || evt.clientX > svgRect.right ||
+        evt.clientY < svgRect.top || evt.clientY > svgRect.bottom) {
+      removeOpeningPreview();
+      return;
+    }
+    const point = svgPoint(evt);
+    const result = nearestWallForPoint(R.shape, point);
+    const seg = getWallSegment(R.shape, result.wallIdx);
+    const width = openingPlacement.width;
+    const pos = Math.round(Math.max(0, Math.min(seg.length - width, result.pos - width / 2)));
+    const preview = { wallId: result.wallId, type: openingPlacement.type, width: width, pos: pos, hingeAtStart: true };
+    renderOpeningPreview(preview, R.shape);
+  }
+
+  function endOpeningPlacement(evt) {
+    cleanupOpeningPlacement();
+    const R = currentRoom();
+    if (!R || !openingPlacement) { openingPlacement = null; return; }
+    const svgRect = svg.getBoundingClientRect();
+    if (evt.clientX < svgRect.left || evt.clientX > svgRect.right ||
+        evt.clientY < svgRect.top || evt.clientY > svgRect.bottom) {
+      openingPlacement = null;
+      return;
+    }
+    const point = svgPoint(evt);
+    const result = nearestWallForPoint(R.shape, point);
+    const seg = getWallSegment(R.shape, result.wallIdx);
+    const width = openingPlacement.width;
+    const pos = Math.round(Math.max(0, Math.min(seg.length - width, result.pos - width / 2)));
+    const candidate = { wallId: result.wallId, type: openingPlacement.type, width: width, pos: pos, hingeAtStart: true };
+    if (openingFits(candidate, R.shape)) {
+      candidate.id = R.nextOpeningId++;
+      R.openings.push(candidate);
+      render();
+      renderOpeningList();
+      selectOpening(candidate.id);
+      saveStoreNow();
+    }
+    openingPlacement = null;
+  }
+
+  function cancelOpeningPlacement() {
+    cleanupOpeningPlacement();
+    openingPlacement = null;
+  }
+
+  function cleanupOpeningPlacement() {
+    document.removeEventListener('pointermove', onOpeningPlacement);
+    document.removeEventListener('pointerup', endOpeningPlacement);
+    document.removeEventListener('pointercancel', cancelOpeningPlacement);
+    document.body.style.cursor = '';
+    removeOpeningPreview();
+  }
+
+  function renderOpeningPreview(opening, shape) {
+    removeOpeningPreview();
+    const span = openingSpan(opening, shape);
+    if (!span) return;
+    const g = document.createElementNS(NS, 'g');
+    g.id = 'openingPlacementPreview';
+    g.style.opacity = '0.5';
+    g.style.pointerEvents = 'none';
+    g.innerHTML = '<path d="' + wallCutoutPath(span.seg, span.s0, span.s1) + '" fill="#FFFFFF"/>' + openingSvg(opening, shape);
+    svg.appendChild(g);
+  }
+
+  function removeOpeningPreview() {
+    const el = svg.querySelector('#openingPlacementPreview');
+    if (el) el.remove();
+  }
+
+  document.querySelectorAll('[data-palette-type]').forEach(function(btn) {
+    btn.addEventListener('pointerdown', startOpeningPlacement);
+  });
+
   function commitMeasureInput() {
     if (measureInput.style.display === "none") return;
     const R = currentRoom();
@@ -439,8 +588,10 @@
     item.x = Math.round(p.x - dragging.offsetX);
     item.y = Math.round(p.y - dragging.offsetY);
     const margin = Math.max(item.w, item.d);
-    item.x = Math.max(-margin, Math.min(R.room.w + margin - item.w, item.x));
-    item.y = Math.max(-margin, Math.min(R.room.d + margin - item.d, item.y));
+    const bbox = shapeBBox(R.shape);
+    item.x = Math.max(bbox.minX - margin, Math.min(bbox.maxX + margin - item.w, item.x));
+    item.y = Math.max(bbox.minY - margin, Math.min(bbox.maxY + margin - item.d, item.y));
+    autoRotateToWall(item, R);
     applySnapping(item, R);
     refreshItemVisual(item);
     const g = svg.querySelector(`g[data-id="${item.id}"]`);

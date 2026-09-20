@@ -98,6 +98,20 @@
     text-align: center; border: 1px solid var(--amber); border-radius: 3px;
     background: #FFFFFF; color: var(--cream); z-index: 6;
   }
+  .opening-palette {
+    position: absolute; top: 10px; right: 54px; z-index: 6;
+    display: flex; gap: 4px;
+  }
+  .opening-palette button {
+    width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--navy-1); font-size: 18px; cursor: grab;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    touch-action: none; user-select: none;
+  }
+  .opening-palette button[data-palette-type="window-double"] { font-size: 12px; width: 44px; }
+  .opening-palette button:hover { border-color: #1B4E8F; background: var(--navy-2); }
+
   .measure-tool-btn {
     position: absolute; top: 10px; right: 10px; z-index: 6;
     width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line);
@@ -222,3 +236,34 @@
   .apt-floor-tab.active {
     background: var(--amber); color: var(--amber-dark); border-color: var(--amber);
   }
+
+  .variant-tabs {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px;
+  }
+  .variant-tab {
+    background: var(--navy-2); border: 1px solid var(--line); color: var(--cream);
+    font-size: 12px; padding: 5px 12px; border-radius: 4px; cursor: pointer;
+    font-weight: 500;
+  }
+  .variant-tab.active {
+    background: var(--amber); color: var(--amber-dark); border-color: var(--amber);
+  }
+
+  .shape-wall-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px;
+  }
+  .shape-wall-table th {
+    text-align: left; font-weight: 600; color: var(--cream-dim);
+    padding: 3px 4px; border-bottom: 1px solid var(--line-soft);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .shape-wall-table td {
+    padding: 3px 4px; border-bottom: 1px solid var(--line-soft);
+  }
+  .shape-wall-table input[type="number"] {
+    width: 68px; font-size: 12px; padding: 3px 4px;
+    border: 1px solid var(--line); border-radius: 3px;
+    background: var(--navy-1); color: var(--cream);
+    font-family: 'Courier New', monospace;
+  }
+  .shape-wall-table .dim { color: var(--cream-dim); font-size: 11px; }

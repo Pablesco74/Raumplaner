@@ -2,7 +2,7 @@
 // Wird VOR store.js geladen. Definiert die aktuelle Schemaversion,
 // die Migrationskette und die Fehlerbehandlung für beschädigte Daten.
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 let _migrationFailed = false;
 
 // Migrationskette: jede Funktion transformiert Version N → N+1.
@@ -87,6 +87,46 @@ const MIGRATIONS = {
       });
     }
     data.schemaVersion = 3;
+    return data;
+  },
+  // Version 3 → 4: Variant system + polygon shape consolidation
+  3: function(data) {
+    if (data.projects) {
+      data.projects.forEach(function(p) {
+        if (p.rooms) {
+          p.rooms.forEach(function(r) {
+            if (!r.shape) {
+              var w = r.room ? r.room.w : 400;
+              var d = r.room ? r.room.d : 300;
+              r.shape = {
+                vertices: [{x:0,y:0},{x:w,y:0},{x:w,y:d},{x:0,y:d}],
+                wallIds: [1,2,3,4]
+              };
+            }
+            if (!r.nextWallId) {
+              var maxId = 4;
+              for (var k = 0; k < r.shape.wallIds.length; k++) {
+                if (r.shape.wallIds[k] > maxId) maxId = r.shape.wallIds[k];
+              }
+              r.nextWallId = maxId + 1;
+            }
+            if (!r.variants || r.variants.length === 0) {
+              r.variants = [{
+                id: 1,
+                name: "Variante 1",
+                items: r.items || [],
+                floorType: r.floorType || "raster",
+                nextId: r.nextId || 1,
+                nextColor: r.nextColor || 0
+              }];
+              r.currentVariantIdx = 0;
+              r.nextVariantId = 2;
+            }
+          });
+        }
+      });
+    }
+    data.schemaVersion = 4;
     return data;
   }
 };
