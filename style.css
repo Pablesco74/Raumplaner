@@ -313,3 +313,63 @@
     font-size: 14px; font-weight: 600;
     color: var(--cream); margin: 0 0 12px;
   }
+
+  /* ---------- Header layout ---------- */
+  .room-header-top {
+    display: flex; gap: 6px; margin-bottom: 10px; align-items: center;
+  }
+  .room-header-actions { display: none; }
+  .desktop-sidebar { display: none; }
+
+  /* ---------- Desktop layout (≥768px) ---------- */
+  @media (min-width: 768px) {
+    #editorView {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: auto auto 1fr;
+    }
+    .room-header { grid-column: 1 / -1; grid-row: 1; padding: 8px 16px; }
+    .room-header-top { margin-bottom: 4px; }
+    .room-header-actions {
+      display: flex; gap: 6px; align-items: center;
+      margin-left: auto;
+    }
+    .desktop-sidebar {
+      display: block;
+      grid-column: 1; grid-row: 2 / 4;
+      overflow-y: auto;
+      border-right: 1px solid var(--line-soft);
+      background: var(--navy-1);
+      padding: 12px 14px;
+      position: relative; z-index: 20;
+    }
+    .desktop-sidebar .bs-panel { display: block !important; }
+    .desktop-sidebar .bs-title { margin-top: 0; }
+    .bottom-toolbar {
+      grid-column: 2; grid-row: 2;
+      justify-content: flex-start;
+      border-top: none;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .bottom-toolbar .toolbar-divider,
+    .bottom-toolbar #undoBtnBar,
+    .bottom-toolbar #redoBtnBar { display: none; }
+    #editorView .canvas-wrap {
+      grid-column: 2; grid-row: 3;
+      border-top: none;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .bs {
+      left: 260px; right: auto; bottom: auto;
+      width: 400px; max-height: 60vh;
+      border-radius: 0 0 8px 8px;
+      border-top: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      transform: translateY(-8px); opacity: 0;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .bs.open { transform: translateY(0); opacity: 1; }
+    .bs-handle { display: none; }
+    .bs-overlay.open { background: rgba(0,0,0,0.08); }
+  }

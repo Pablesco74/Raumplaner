@@ -697,7 +697,7 @@
   }
   function showEditor() {
     landingView.style.display = "none";
-    editorView.style.display = "flex";
+    editorView.style.display = "";
     camera = { scale: 1, x: 0, y: 0 };
     fullRefresh();
   }
@@ -1067,18 +1067,34 @@
   // Sicherheitsnetz: beim Schließen des Tabs sofort speichern
   window.addEventListener("beforeunload", saveStoreNow);
 
+  // ---------- Desktop layout ----------
+  var isDesktop = false;
+  var desktopSidebar = document.getElementById('desktopSidebar');
+
   // ---------- Bottom Sheet ----------
   let activeSheet = null;
 
   function openSheet(toolName) {
+    if (isDesktop && (toolName === 'rooms' || toolName === 'variants')) {
+      var target = document.getElementById('bs' + toolName.charAt(0).toUpperCase() + toolName.slice(1));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (toolName === 'variants') renderVariantTabs();
+      if (toolName === 'rooms') renderRoomSidebarList();
+      return;
+    }
     if (activeSheet === toolName) { closeSheet(); return; }
-    document.querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
+    document.getElementById('bottomSheet').querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
     var panelId = 'bs' + toolName.charAt(0).toUpperCase() + toolName.slice(1);
     var panel = document.getElementById(panelId);
     if (!panel) return;
     panel.style.display = 'block';
     document.getElementById('bottomSheet').classList.add('open');
     document.getElementById('bsOverlay').classList.add('open');
+    if (isDesktop) {
+      var toolbar = document.getElementById('bottomToolbar');
+      var rect = toolbar.getBoundingClientRect();
+      document.getElementById('bottomSheet').style.top = rect.bottom + 'px';
+    }
     document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
     var btn = document.querySelector('[data-tool="' + toolName + '"]');
     if (btn) btn.classList.add('active');
@@ -1095,7 +1111,7 @@
     document.getElementById('bottomSheet').classList.remove('open');
     document.getElementById('bsOverlay').classList.remove('open');
     document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
-    document.querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
+    document.getElementById('bottomSheet').querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
     activeSheet = null;
     if (wasRoom) renderVertexHandles();
   }
@@ -1117,5 +1133,28 @@
   document.getElementById('bsOverlay').addEventListener('click', closeSheet);
   document.getElementById('undoBtnBar').addEventListener('click', undo);
   document.getElementById('redoBtnBar').addEventListener('click', redo);
+
+  function checkDesktopLayout() {
+    var nowDesktop = window.innerWidth >= 768;
+    if (nowDesktop === isDesktop) return;
+    isDesktop = nowDesktop;
+    var bsRooms = document.getElementById('bsRooms');
+    var bsVariants = document.getElementById('bsVariants');
+    var bottomSheetEl = document.getElementById('bottomSheet');
+    if (isDesktop) {
+      desktopSidebar.appendChild(bsRooms);
+      desktopSidebar.appendChild(bsVariants);
+      bsRooms.style.display = 'block';
+      bsVariants.style.display = 'block';
+    } else {
+      bottomSheetEl.appendChild(bsRooms);
+      bottomSheetEl.appendChild(bsVariants);
+      bsRooms.style.display = 'none';
+      bsVariants.style.display = 'none';
+    }
+    closeSheet();
+  }
+  window.addEventListener('resize', checkDesktopLayout);
+  checkDesktopLayout();
 
   if (!_migrationFailed) showLanding();

@@ -34,15 +34,20 @@
 
 <div class="app" id="editorView" style="display:none">
   <div class="room-header">
-    <div style="display:flex; gap:6px; margin-bottom:10px; align-items:center;">
+    <div class="room-header-top">
       <button class="ghost-btn" id="backToLanding" style="border: 1px solid var(--line); color: var(--cream-dim); background: transparent;">← Alle Projekte</button>
-      <button class="icon-btn" id="undoBtn" title="Rückgängig (Strg+Z)" disabled>↩</button>
-      <button class="icon-btn" id="redoBtn" title="Wiederholen (Strg+Y)" disabled>↪</button>
+      <div class="room-header-actions">
+        <button class="ghost-btn" id="compareBtn" disabled title="Varianten vergleichen (kommt bald)">Vergleichen</button>
+        <button class="icon-btn" id="undoBtn" title="Rückgängig (Strg+Z)" disabled>↩</button>
+        <button class="icon-btn" id="redoBtn" title="Wiederholen (Strg+Y)" disabled>↪</button>
+      </div>
     </div>
     <p class="room-header-project" id="editorProjectName" title="Doppelklick zum Umbenennen"></p>
     <h1 class="room-header-name" id="editorRoomName" title="Doppelklick zum Umbenennen"></h1>
     <button class="variant-pill" id="variantPill"></button>
   </div>
+
+  <aside class="desktop-sidebar" id="desktopSidebar"></aside>
 
   <div class="canvas-wrap">
     <svg id="plan" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
