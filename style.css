@@ -22,7 +22,7 @@
   .subtitle { color: var(--cream-dim); font-size: 13px; margin: 0 0 18px; }
 
   #editorView { max-width: none; padding: 0; margin: 0; height: 100vh; display: flex; flex-direction: column; }
-  .room-header { padding: 14px 16px 8px; flex-shrink: 0; }
+  .room-header { padding: 14px 16px 8px; flex-shrink: 0; position: relative; z-index: 20; }
   .room-header-project {
     font-size: 12px; color: var(--cream-dim); margin: 0 0 2px; cursor: pointer;
     display: block; width: fit-content; outline: none;
@@ -34,6 +34,15 @@
   [contenteditable="true"] {
     background: var(--navy-2); border-radius: 4px; padding: 1px 6px; outline: 2px solid var(--amber);
   }
+  .variant-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--navy-2); border: 1px solid var(--line);
+    border-radius: 14px; padding: 3px 12px 3px 10px;
+    font-size: 12px; font-weight: 500; color: var(--cream);
+    cursor: pointer; margin-top: 4px; line-height: 1.3;
+  }
+  .variant-pill:hover { border-color: var(--amber); }
+  .variant-pill::after { content: "▾"; font-size: 10px; color: var(--cream-dim); margin-left: 2px; }
   #editorView .canvas-wrap { flex: 1; min-height: 0; border-radius: 0; border: none; border-top: 1px solid var(--line-soft); padding: 0; margin: 0; }
   #editorView svg { width: 100%; height: 100%; max-height: none; }
 
@@ -123,39 +132,6 @@
   .measure-tool-btn.active {
     background: #E8A33D; border-color: #E8A33D; color: #FFFFFF;
   }
-
-  .drawer-toggle {
-    position: fixed; left: 0; top: 50%; transform: translateY(-50%);
-    z-index: 30; background: var(--navy-1); border: 1px solid var(--line);
-    border-left: none; border-radius: 0 8px 8px 0; color: var(--cream);
-    width: 26px; height: 58px; display: flex; align-items: center; justify-content: center;
-    font-size: 16px; cursor: pointer; padding: 0;
-  }
-  .drawer-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-    opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 28;
-  }
-  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-  .drawer {
-    position: fixed; left: 0; top: 0; bottom: 0; width: min(340px, 86vw);
-    background: var(--navy-1); border-right: 1px solid var(--line-soft);
-    transform: translateX(-100%); transition: transform 0.2s ease;
-    z-index: 29; overflow-y: auto; padding: 18px 16px 40px;
-  }
-  .drawer.open { transform: translateX(0); }
-  .cat-section { margin-bottom: 18px; border-bottom: 1px solid var(--line-soft); padding-bottom: 4px; }
-  .cat-section summary {
-    font-size: 14px; font-weight: 600; color: var(--cream); margin: 0;
-    padding: 4px 0 12px; cursor: pointer; list-style: none;
-    display: flex; align-items: center; justify-content: space-between;
-    user-select: none;
-  }
-  .cat-section summary::-webkit-details-marker { display: none; }
-  .cat-section summary::after {
-    content: "⌄"; font-size: 14px; color: var(--cream-dim);
-    transition: transform 0.15s ease;
-  }
-  .cat-section[open] summary::after { transform: rotate(180deg); }
 
   .card { background: var(--navy-2); border: 1px solid var(--line-soft); border-radius: 6px; padding: 14px 14px; margin-bottom: 14px; }
   .card h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--cream-dim); margin: 0 0 12px; font-weight: 600; }
@@ -267,3 +243,133 @@
     font-family: 'Courier New', monospace;
   }
   .shape-wall-table .dim { color: var(--cream-dim); font-size: 11px; }
+
+  /* ---------- Bottom Toolbar ---------- */
+  .bottom-toolbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: var(--navy-1);
+    border-top: 1px solid var(--line-soft);
+    padding: 4px 8px;
+    height: 52px;
+    position: relative;
+    z-index: 20;
+  }
+  .tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    background: transparent;
+    border: none;
+    color: var(--cream-dim);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 52px;
+  }
+  .tool-btn .tool-icon { font-size: 20px; line-height: 1.2; }
+  .tool-btn.active { color: var(--amber); background: var(--navy-2); }
+  .toolbar-divider {
+    width: 1px; height: 28px; background: var(--line-soft);
+    margin: 0 6px; flex-shrink: 0;
+  }
+
+  /* ---------- Bottom Sheet ---------- */
+  .bs-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 15;
+  }
+  .bs-overlay.open { opacity: 1; pointer-events: auto; }
+  .bs {
+    position: fixed; left: 0; right: 0; bottom: 52px;
+    max-height: 50vh;
+    background: var(--navy-1);
+    border-top: 1px solid var(--line);
+    border-radius: 12px 12px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    z-index: 16;
+    overflow-y: auto;
+    padding: 0 16px 16px;
+    pointer-events: none;
+  }
+  .bs.open { transform: translateY(0); pointer-events: auto; }
+  .bs-handle {
+    width: 36px; height: 4px;
+    background: var(--line); border-radius: 2px;
+    margin: 8px auto 12px;
+  }
+  .bs-panel { display: none; }
+  .bs-title {
+    font-size: 14px; font-weight: 600;
+    color: var(--cream); margin: 0 0 12px;
+  }
+
+  /* ---------- Header layout ---------- */
+  .room-header-top {
+    display: flex; gap: 6px; margin-bottom: 10px; align-items: center;
+  }
+  .room-header-actions { display: none; }
+  .desktop-sidebar { display: none; }
+
+  /* ---------- Desktop layout (≥768px) ---------- */
+  @media (min-width: 768px) {
+    #editorView {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: auto auto 1fr;
+    }
+    .room-header { grid-column: 1 / -1; grid-row: 1; padding: 8px 16px; }
+    .room-header-top { margin-bottom: 4px; }
+    .room-header-actions {
+      display: flex; gap: 6px; align-items: center;
+      margin-left: auto;
+    }
+    .desktop-sidebar {
+      display: block;
+      grid-column: 1; grid-row: 2 / 4;
+      overflow-y: auto;
+      border-right: 1px solid var(--line-soft);
+      background: var(--navy-1);
+      padding: 12px 14px;
+      position: relative; z-index: 20;
+    }
+    .desktop-sidebar .bs-panel { display: block !important; }
+    .desktop-sidebar .bs-title { margin-top: 0; }
+    .bottom-toolbar {
+      grid-column: 2; grid-row: 2;
+      justify-content: flex-start;
+      border-top: none;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .bottom-toolbar .toolbar-divider,
+    .bottom-toolbar #undoBtnBar,
+    .bottom-toolbar #redoBtnBar { display: none; }
+    #editorView .canvas-wrap {
+      grid-column: 2; grid-row: 3;
+      border-top: none;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .bs {
+      left: 260px; right: auto; bottom: auto;
+      width: 400px; max-height: 60vh;
+      border-radius: 0 0 8px 8px;
+      border-top: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      transform: translateY(-8px); opacity: 0;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .bs.open { transform: translateY(0); opacity: 1; }
+    .bs-handle { display: none; }
+    .bs-overlay.open { background: rgba(0,0,0,0.08); }
+  }

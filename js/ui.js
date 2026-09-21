@@ -242,6 +242,15 @@
   });
 
   // ---------- Varianten ----------
+  function renderVariantPill() {
+    var pill = document.getElementById("variantPill");
+    if (!pill) return;
+    var R = currentRoom();
+    if (!R) { pill.textContent = ""; return; }
+    ensureVariants(R);
+    var v = R.variants[R.currentVariantIdx || 0];
+    pill.textContent = v ? v.name : "Variante 1";
+  }
   function renderVariantTabs() {
     const R = currentRoom();
     const container = document.getElementById("variantTabs");
@@ -270,6 +279,7 @@
       });
       container.appendChild(btn);
     });
+    renderVariantPill();
   }
   function showVariantMsg(text) {
     var el = document.getElementById("variantMsg");
@@ -346,6 +356,17 @@
     renderRoomSidebarList();
     saveStoreNow();
   });
+  (function() {
+    var clickTimer = null;
+    editorRoomNameEl.addEventListener("click", function() {
+      if (editorRoomNameEl.contentEditable === "true") return;
+      if (clickTimer) return;
+      clickTimer = setTimeout(function() { clickTimer = null; openSheet('rooms'); }, 260);
+    });
+    editorRoomNameEl.addEventListener("dblclick", function() {
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+    });
+  })();
   function syncEditorHeader() {
     const proj = currentProject(), R = currentRoom();
     editorProjectNameEl.textContent = proj ? proj.name : "";
@@ -407,6 +428,7 @@
             selectedId = null;
             camera = { scale: 1, x: 0, y: 0 };
             saveStoreNow();
+            closeSheet();
             fullRefresh();
           }
         }, 260);
@@ -509,6 +531,7 @@
     selectedId = null;
     camera = { scale: 1, x: 0, y: 0 };
     saveStoreNow();
+    closeSheet();
     fullRefresh();
   });
   document.getElementById("sidebarAddFloor").addEventListener("click", () => {
@@ -521,6 +544,7 @@
     selectedId = null;
     camera = { scale: 1, x: 0, y: 0 };
     saveStoreNow();
+    closeSheet();
     fullRefresh();
   });
 
@@ -613,10 +637,6 @@
     saveStoreNow();
   });
 
-  document.getElementById("shapeSection").addEventListener("toggle", function() {
-    renderVertexHandles();
-    renderShapeTable();
-  });
 
   // ---------- sync UI when switching project/room ----------
   function syncRoomBarInputs() {
@@ -659,14 +679,6 @@
     });
   }
 
-  // ---------- drawer ----------
-  const drawer = document.getElementById("drawer");
-  const drawerOverlay = document.getElementById("drawerOverlay");
-  const drawerToggle = document.getElementById("drawerToggle");
-  function openDrawer() { drawer.classList.add("open"); drawerOverlay.classList.add("open"); drawerToggle.textContent = "‹"; }
-  function closeDrawer() { drawer.classList.remove("open"); drawerOverlay.classList.remove("open"); drawerToggle.textContent = "›"; }
-  drawerToggle.addEventListener("click", () => { drawer.classList.contains("open") ? closeDrawer() : openDrawer(); });
-  drawerOverlay.addEventListener("click", closeDrawer);
 
   window.addEventListener("resize", updateRotateButton);
 
@@ -678,16 +690,14 @@
   const editorView = document.getElementById("editorView");
 
   function showLanding() {
-    closeDrawer();
+    closeSheet();
     editorView.style.display = "none";
     landingView.style.display = "block";
-    drawerToggle.style.display = "none";
     renderLandingProjects();
   }
   function showEditor() {
     landingView.style.display = "none";
-    editorView.style.display = "flex";
-    drawerToggle.style.display = "flex";
+    editorView.style.display = "";
     camera = { scale: 1, x: 0, y: 0 };
     fullRefresh();
   }
@@ -1056,5 +1066,95 @@
 
   // Sicherheitsnetz: beim Schließen des Tabs sofort speichern
   window.addEventListener("beforeunload", saveStoreNow);
+
+  // ---------- Desktop layout ----------
+  var isDesktop = false;
+  var desktopSidebar = document.getElementById('desktopSidebar');
+
+  // ---------- Bottom Sheet ----------
+  let activeSheet = null;
+
+  function openSheet(toolName) {
+    if (isDesktop && (toolName === 'rooms' || toolName === 'variants')) {
+      var target = document.getElementById('bs' + toolName.charAt(0).toUpperCase() + toolName.slice(1));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (toolName === 'variants') renderVariantTabs();
+      if (toolName === 'rooms') renderRoomSidebarList();
+      return;
+    }
+    if (activeSheet === toolName) { closeSheet(); return; }
+    document.getElementById('bottomSheet').querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
+    var panelId = 'bs' + toolName.charAt(0).toUpperCase() + toolName.slice(1);
+    var panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.style.display = 'block';
+    document.getElementById('bottomSheet').classList.add('open');
+    document.getElementById('bsOverlay').classList.add('open');
+    if (isDesktop) {
+      var toolbar = document.getElementById('bottomToolbar');
+      var rect = toolbar.getBoundingClientRect();
+      document.getElementById('bottomSheet').style.top = rect.bottom + 'px';
+    }
+    document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
+    var btn = document.querySelector('[data-tool="' + toolName + '"]');
+    if (btn) btn.classList.add('active');
+    activeSheet = toolName;
+    if (toolName === 'furniture') renderFurnitureList();
+    if (toolName === 'openings') { refreshWallAndCornerOptions(); renderOpeningList(); }
+    if (toolName === 'room') { renderShapeTable(); renderVertexHandles(); }
+    if (toolName === 'variants') renderVariantTabs();
+    if (toolName === 'rooms') renderRoomSidebarList();
+  }
+
+  function closeSheet() {
+    var wasRoom = activeSheet === 'room';
+    document.getElementById('bottomSheet').classList.remove('open');
+    document.getElementById('bsOverlay').classList.remove('open');
+    document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('bottomSheet').querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
+    activeSheet = null;
+    if (wasRoom) renderVertexHandles();
+  }
+
+  document.querySelectorAll('.tool-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var tool = btn.dataset.tool;
+      if (tool === 'measure') {
+        closeSheet();
+        toggleMeasureTool();
+        btn.classList.toggle('active', measureToolActive);
+        return;
+      }
+      openSheet(tool);
+    });
+  });
+
+  document.getElementById('variantPill').addEventListener('click', function() { openSheet('variants'); });
+  document.getElementById('bsOverlay').addEventListener('click', closeSheet);
+  document.getElementById('undoBtnBar').addEventListener('click', undo);
+  document.getElementById('redoBtnBar').addEventListener('click', redo);
+
+  function checkDesktopLayout() {
+    var nowDesktop = window.innerWidth >= 768;
+    if (nowDesktop === isDesktop) return;
+    isDesktop = nowDesktop;
+    var bsRooms = document.getElementById('bsRooms');
+    var bsVariants = document.getElementById('bsVariants');
+    var bottomSheetEl = document.getElementById('bottomSheet');
+    if (isDesktop) {
+      desktopSidebar.appendChild(bsRooms);
+      desktopSidebar.appendChild(bsVariants);
+      bsRooms.style.display = 'block';
+      bsVariants.style.display = 'block';
+    } else {
+      bottomSheetEl.appendChild(bsRooms);
+      bottomSheetEl.appendChild(bsVariants);
+      bsRooms.style.display = 'none';
+      bsVariants.style.display = 'none';
+    }
+    closeSheet();
+  }
+  window.addEventListener('resize', checkDesktopLayout);
+  checkDesktopLayout();
 
   if (!_migrationFailed) showLanding();

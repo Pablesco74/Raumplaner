@@ -9,10 +9,16 @@ let redoStack = [];
 let _undoSuppress = false; // unterdrückt Snapshots während undo/redo
 
 function updateUndoButtons() {
-  const undoBtn = document.getElementById("undoBtn");
-  const redoBtn = document.getElementById("redoBtn");
-  if (undoBtn) undoBtn.disabled = undoStack.length === 0;
-  if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+  var empty = undoStack.length === 0;
+  var noRedo = redoStack.length === 0;
+  ["undoBtn", "undoBtnBar"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.disabled = empty;
+  });
+  ["redoBtn", "redoBtnBar"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.disabled = noRedo;
+  });
 }
 
 function undoSnapshot() {
