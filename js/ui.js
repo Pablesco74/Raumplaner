@@ -356,6 +356,17 @@
     renderRoomSidebarList();
     saveStoreNow();
   });
+  (function() {
+    var clickTimer = null;
+    editorRoomNameEl.addEventListener("click", function() {
+      if (editorRoomNameEl.contentEditable === "true") return;
+      if (clickTimer) return;
+      clickTimer = setTimeout(function() { clickTimer = null; openSheet('rooms'); }, 260);
+    });
+    editorRoomNameEl.addEventListener("dblclick", function() {
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+    });
+  })();
   function syncEditorHeader() {
     const proj = currentProject(), R = currentRoom();
     editorProjectNameEl.textContent = proj ? proj.name : "";
@@ -417,6 +428,7 @@
             selectedId = null;
             camera = { scale: 1, x: 0, y: 0 };
             saveStoreNow();
+            closeSheet();
             fullRefresh();
           }
         }, 260);
@@ -519,6 +531,7 @@
     selectedId = null;
     camera = { scale: 1, x: 0, y: 0 };
     saveStoreNow();
+    closeSheet();
     fullRefresh();
   });
   document.getElementById("sidebarAddFloor").addEventListener("click", () => {
@@ -531,6 +544,7 @@
     selectedId = null;
     camera = { scale: 1, x: 0, y: 0 };
     saveStoreNow();
+    closeSheet();
     fullRefresh();
   });
 
@@ -1084,6 +1098,7 @@
     if (toolName === 'openings') { refreshWallAndCornerOptions(); renderOpeningList(); }
     if (toolName === 'room') { renderShapeTable(); renderVertexHandles(); }
     if (toolName === 'variants') renderVariantTabs();
+    if (toolName === 'rooms') renderRoomSidebarList();
   }
 
   function closeSheet() {

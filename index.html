@@ -146,6 +146,22 @@
       </div>
     </div>
 
+    <div class="bs-panel" id="bsRooms">
+      <div class="bs-title">Räume</div>
+      <div class="card">
+        <div id="roomSidebarList"></div>
+        <div class="add-form" style="margin-top: 10px;">
+          <div class="field">
+            <label>Stockwerk</label>
+            <select id="sidebarAddRoomFloor" class="room-floor-sel"></select>
+          </div>
+          <button id="sidebarAddRoom">+ Neuer Raum</button>
+          <button id="sidebarAddFloor" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Stockwerk</button>
+        </div>
+        <p class="error-msg" id="roomSidebarMsg"></p>
+      </div>
+    </div>
+
     <div class="bs-panel" id="bsVariants">
       <div class="bs-title">Einrichtungsvarianten</div>
       <div class="card">
@@ -212,22 +228,6 @@
 <div class="drawer-overlay" id="drawerOverlay"></div>
 <div class="drawer" id="drawer">
 
-  <details class="cat-section">
-    <summary>Räume</summary>
-    <div class="card">
-      <h3>Räume in diesem Projekt</h3>
-      <div id="roomSidebarList"></div>
-      <div class="add-form" style="margin-top: 10px;">
-        <div class="field">
-          <label>Stockwerk</label>
-          <select id="sidebarAddRoomFloor" class="room-floor-sel"></select>
-        </div>
-        <button id="sidebarAddRoom">+ Neuer Raum</button>
-        <button id="sidebarAddFloor" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Stockwerk</button>
-      </div>
-      <p class="error-msg" id="roomSidebarMsg"></p>
-    </div>
-  </details>
 
 
 
