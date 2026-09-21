@@ -679,14 +679,6 @@
     });
   }
 
-  // ---------- drawer ----------
-  const drawer = document.getElementById("drawer");
-  const drawerOverlay = document.getElementById("drawerOverlay");
-  const drawerToggle = document.getElementById("drawerToggle");
-  function openDrawer() { drawer.classList.add("open"); drawerOverlay.classList.add("open"); drawerToggle.textContent = "‹"; }
-  function closeDrawer() { drawer.classList.remove("open"); drawerOverlay.classList.remove("open"); drawerToggle.textContent = "›"; }
-  drawerToggle.addEventListener("click", () => { drawer.classList.contains("open") ? closeDrawer() : openDrawer(); });
-  drawerOverlay.addEventListener("click", closeDrawer);
 
   window.addEventListener("resize", updateRotateButton);
 
@@ -699,16 +691,13 @@
 
   function showLanding() {
     closeSheet();
-    closeDrawer();
     editorView.style.display = "none";
     landingView.style.display = "block";
-    drawerToggle.style.display = "none";
     renderLandingProjects();
   }
   function showEditor() {
     landingView.style.display = "none";
     editorView.style.display = "flex";
-    drawerToggle.style.display = "flex";
     camera = { scale: 1, x: 0, y: 0 };
     fullRefresh();
   }
