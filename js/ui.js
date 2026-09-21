@@ -242,6 +242,15 @@
   });
 
   // ---------- Varianten ----------
+  function renderVariantPill() {
+    var pill = document.getElementById("variantPill");
+    if (!pill) return;
+    var R = currentRoom();
+    if (!R) { pill.textContent = ""; return; }
+    ensureVariants(R);
+    var v = R.variants[R.currentVariantIdx || 0];
+    pill.textContent = v ? v.name : "Variante 1";
+  }
   function renderVariantTabs() {
     const R = currentRoom();
     const container = document.getElementById("variantTabs");
@@ -270,6 +279,7 @@
       });
       container.appendChild(btn);
     });
+    renderVariantPill();
   }
   function showVariantMsg(text) {
     var el = document.getElementById("variantMsg");
@@ -1073,6 +1083,7 @@
     if (toolName === 'furniture') renderFurnitureList();
     if (toolName === 'openings') { refreshWallAndCornerOptions(); renderOpeningList(); }
     if (toolName === 'room') { renderShapeTable(); renderVertexHandles(); }
+    if (toolName === 'variants') renderVariantTabs();
   }
 
   function closeSheet() {
@@ -1098,6 +1109,7 @@
     });
   });
 
+  document.getElementById('variantPill').addEventListener('click', function() { openSheet('variants'); });
   document.getElementById('bsOverlay').addEventListener('click', closeSheet);
   document.getElementById('undoBtnBar').addEventListener('click', undo);
   document.getElementById('redoBtnBar').addEventListener('click', redo);
