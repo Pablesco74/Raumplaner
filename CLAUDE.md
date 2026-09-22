@@ -62,7 +62,7 @@ MVP-Fokus: präzise 2D-Raumplanung. Kein 3D, keine KI, kein Produktkatalog, kein
 - Einfache UI-Interaktionen (Verschieben, Klicks, Zoom) weiterhin manuell im Browser testen
 - **Framework**: Node.js eingebauter Test-Runner (`node:test` + `node:assert/strict`), keine zusätzliche Abhängigkeit nötig (Node ≥ 18). Passt zum Vanilla-JS-Ansatz ohne Build-Tooling.
 - Die `js/*.js`-Dateien sind klassische Browser-`<script>`-Dateien ohne Module-Exports. `tests/helpers/load-scripts.js` lädt die benötigten Dateien per `vm`-Kontext (mit minimalen Stubs für `document`/`localStorage`) und macht ihre Top-Level-Funktionen für Tests zugänglich, ohne den Produktionscode zu verändern.
-- Lokal ausführen: `npm test` (bzw. `node --test tests/`)
+- Lokal ausführen: `npm test` (bzw. `node --test`, aus dem Projekt-Root)
 - Tests liegen in `tests/`, Namensschema `*.test.js`
 
 ## Changelog-Pflicht
