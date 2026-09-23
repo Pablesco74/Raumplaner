@@ -8,7 +8,7 @@ MVP-Fokus: präzise 2D-Raumplanung. Kein 3D, keine KI, kein Produktkatalog, kein
 ## Tech-Stack
 - Vanilla JS, kein Framework (bewusste Entscheidung, kein React-Native-Rewrite geplant)
 - Dateien: `index.html`, `style.css`, `js/*.js` (aufgeteilt nach Zuständigkeit, siehe Liste unten)
-- Speicherung: `localStorage`, mit `schemaVersion`-Feld und automatischer Migration alter Datenstände
+- Speicherung: `localStorage`, gekapselt hinter `js/storage.js` (kein direkter `localStorage`-Zugriff sonst im Code), mit `schemaVersion`-Feld und automatischer Migration alter Datenstände
 - Deployment: GitHub Pages (Phase A des Veröffentlichungsplans)
 - Nächster geplanter Meilenstein nach dem aktuellen Datenmodell-Umbau: Verpacken als native App (Capacitor) für App Store / Google Play, ohne Neuentwicklung
 
@@ -16,9 +16,10 @@ MVP-Fokus: präzise 2D-Raumplanung. Kein 3D, keine KI, kein Produktkatalog, kein
 - `index.html` – HTML-Grundgerüst, Sidebar-/Toolbar-Markup, SVG-Canvas, lädt `style.css` und alle `js/*.js` in Reihenfolge
 - `style.css` – gesamtes Styling der App (Layout, Sidebar, Toolbar, SVG-Elemente)
 - `js/constants.js` – globale Konstanten (Farbpalette, Wandstärke `WALL_T`, Andock-Radius `SNAP`) und UI-Selektions-State
-- `js/migration.js` – Schema-Versionierung (`SCHEMA_VERSION`) und Migrationskette für ältere `localStorage`-Datenstände
+- `js/storage.js` – einziger Ort mit direktem `localStorage`-Zugriff (Laden/Speichern/Löschen des kompletten Stores); Rest der App spricht nur über diese Funktionen mit dem Speicher
+- `js/migration.js` – Schema-Versionierung (`SCHEMA_VERSION`) und Migrationskette für ältere Datenstände
 - `js/geometry.js` – Polygon-Shape-Datenmodell (Vertices + Wand-IDs), Wandgeometrie- und Andock-Berechnungen
-- `js/store.js` – Projekt-/Raum-/Varianten-Datenmodell, `localStorage`-Speichern/Laden, Export
+- `js/store.js` – Projekt-/Raum-/Varianten-Datenmodell, Speichern/Laden über `js/storage.js`, Export
 - `js/undo.js` – Undo/Redo-Stack (nur Session, max. 50 Schritte)
 - `js/floor.js` – Bodenbelag-SVG-Generierung (Raster/Muster)
 - `js/svg-elements.js` – SVG-Bausteine für Wände, Türen/Fenster, Möbel-Icons
