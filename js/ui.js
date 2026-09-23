@@ -296,15 +296,6 @@
     renderVariantTabs();
     saveStoreNow();
   });
-  document.getElementById("variantDuplicate").addEventListener("click", function() {
-    var R = currentRoom();
-    if (!R) return;
-    duplicateVariant(R);
-    render();
-    renderFurnitureList();
-    renderVariantTabs();
-    saveStoreNow();
-  });
   document.getElementById("variantDelete").addEventListener("click", function() {
     var R = currentRoom();
     if (!R) return;

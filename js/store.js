@@ -60,18 +60,20 @@
     room.nextColor = v.nextColor;
   }
 
-  function addVariant(room, name) {
-    ensureVariants(room);
-    saveCurrentVariant(room);
-    var newId = room.nextVariantId || (Math.max(0, ...room.variants.map(function(v){return v.id;})) + 1);
-    room.nextVariantId = newId + 1;
-    var v = { id: newId, name: name || ("Variante " + (room.variants.length + 1)), items: [], floorType: room.floorType, nextId: 1, nextColor: 0 };
-    room.variants.push(v);
-    loadVariant(room, room.variants.length - 1);
-    return v;
+  // Höchste bestehende "Variante N"-Nummer im Raum + 1 (unabhängig davon,
+  // ob eine Variante umbenannt wurde oder von welcher dupliziert wird).
+  function nextVariantNumber(room) {
+    var maxN = 0;
+    room.variants.forEach(function(v) {
+      var m = /^Variante (\d+)$/.exec(v.name);
+      if (m) maxN = Math.max(maxN, Number(m[1]));
+    });
+    return maxN + 1;
   }
 
-  function duplicateVariant(room) {
+  // "+ Neue Variante" dupliziert standardmäßig Möbel + Bodenbelag der
+  // aktuell aktiven Variante.
+  function addVariant(room) {
     ensureVariants(room);
     saveCurrentVariant(room);
     var src = room.variants[room.currentVariantIdx || 0];
@@ -79,7 +81,7 @@
     room.nextVariantId = newId + 1;
     var v = {
       id: newId,
-      name: src.name + " (Kopie)",
+      name: "Variante " + nextVariantNumber(room),
       items: JSON.parse(JSON.stringify(src.items)),
       floorType: src.floorType,
       nextId: src.nextId,
