@@ -14,3 +14,7 @@ Beispiel:
 - CHANGELOG.md angelegt
 - Leichtgewichtiges Test-Setup eingerichtet (Node `node:test`, vm-basierter Script-Loader, ein Beispieltest)
 - Dateien: CLAUDE.md, CHANGELOG.md, package.json, tests/helpers/load-scripts.js, tests/geometry.example.test.js
+
+## 2026-09-23
+- GitHub-Actions-Workflow eingerichtet, führt `npm test` bei Push auf main und bei Pull Requests aus
+- Dateien: .github/workflows/test.yml, CLAUDE.md

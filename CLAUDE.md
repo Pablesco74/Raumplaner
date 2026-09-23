@@ -64,6 +64,7 @@ MVP-Fokus: präzise 2D-Raumplanung. Kein 3D, keine KI, kein Produktkatalog, kein
 - Die `js/*.js`-Dateien sind klassische Browser-`<script>`-Dateien ohne Module-Exports. `tests/helpers/load-scripts.js` lädt die benötigten Dateien per `vm`-Kontext (mit minimalen Stubs für `document`/`localStorage`) und macht ihre Top-Level-Funktionen für Tests zugänglich, ohne den Produktionscode zu verändern.
 - Lokal ausführen: `npm test` (bzw. `node --test`, aus dem Projekt-Root)
 - Tests liegen in `tests/`, Namensschema `*.test.js`
+- CI: `.github/workflows/test.yml` führt `npm test` bei jedem Push auf `main` und bei jedem Pull Request automatisch aus (GitHub Actions, Node 22)
 
 ## Changelog-Pflicht
 Nach jeder abgeschlossenen Teilaufgabe einen kurzen Eintrag in `CHANGELOG.md` (Root) ergänzen: Datum, was wurde geändert, betroffene Dateien. Kurz und stichpunktartig, kein Roman.
