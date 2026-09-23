@@ -214,6 +214,6 @@ function exportBrokenData() {
 }
 
 function resetAndRestart() {
-  try { localStorage.removeItem("raumplaner_store"); } catch(e) {}
+  loescheGespeichertenStore();
   location.reload();
 }
