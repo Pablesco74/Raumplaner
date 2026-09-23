@@ -1,4 +1,4 @@
-// ---------- Projekt/Raum-Datenmodell + localStorage ----------
+// ---------- Projekt/Raum-Datenmodell (Speicherung über storage.js) ----------
   function makeVariant(name) {
     return { id: 1, name: name || "Variante 1", items: [], floorType: "raster", nextId: 1, nextColor: 0 };
   }
@@ -109,9 +109,7 @@
     return { id: store.nextProjectId++, name: name || "Neues Projekt", rooms: [room] };
   }
 
-  const LS_KEY = "raumplaner_store";
-
-  // ---------- localStorage Speichern / Laden ----------
+  // ---------- Speichern / Laden (über storage.js) ----------
   let _saveTimer = null;
   function syncAllVariants() {
     store.projects.forEach(function(p) {
@@ -123,7 +121,7 @@
     _saveTimer = setTimeout(() => {
       _saveTimer = null;
       syncAllVariants();
-      try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) {}
+      speichereStore(store);
     }, 200);
   }
   let _undoHook = null;
@@ -131,14 +129,7 @@
     if (_undoHook) _undoHook();
     if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
     syncAllVariants();
-    try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) {}
-  }
-  function loadRawStore() {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (e) { /* beschädigtes JSON */ }
-    return null;
+    speichereStore(store);
   }
   function exportStoreAsFile() {
     const json = JSON.stringify(store, null, 2);
@@ -155,7 +146,7 @@
 
   let store = { projects: [], currentProjectId: null, currentRoomId: null, nextProjectId: 1, nextRoomId: 1, schemaVersion: SCHEMA_VERSION };
   (function bootstrap() {
-    let raw = loadRawStore();
+    let raw = ladeGespeichertenStore();
 
     if (raw) {
       // Grundstruktur prüfen
