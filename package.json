@@ -1,0 +1,8 @@
+{
+  "name": "raumwerk",
+  "private": true,
+  "description": "RAUMWERK – Raum- und Einrichtungsplanung (Vanilla JS)",
+  "scripts": {
+    "test": "node --test"
+  }
+}
