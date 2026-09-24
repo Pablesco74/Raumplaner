@@ -1,5 +1,8 @@
 # RAUMWERK – Projektkontext für Claude Code
 
+## Sprache
+Im Chat mit diesem Nutzer auf Deutsch antworten. Code, Bezeichner und Commit-Konventionen bleiben wie gehabt (siehe „Variablen-/Kommentar-Sprache" unten).
+
 ## Was ist das
 RAUMWERK ist eine Raum- und Einrichtungsplanungs-App für Privatpersonen (Web, später native App via Capacitor). Nutzer planen Räume, legen eigene Möbel maßgenau an, verschieben/drehen sie und vergleichen Einrichtungsvarianten. Claim: „Plane. Probiere. Vergleiche.“
 

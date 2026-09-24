@@ -55,8 +55,8 @@
     return out;
   }
 
-  function openingGroupInner(opening, shape) {
-    const selected = opening.id === selectedOpeningId;
+  function openingGroupInner(opening, shape, noSelect) {
+    const selected = !noSelect && opening.id === selectedOpeningId;
     const hitPoly = openingHitPoly(opening, shape);
     if (!hitPoly) return '';
     const hitPoints = hitPoly.map(p => `${p.x},${p.y}`).join(' ');
@@ -171,8 +171,8 @@
     }
     return leafAndArcSvg(P0, P1, normal, item.w, color);
   }
-  function furnitureGroupInner(item) {
-    const selected = item.id === selectedId;
+  function furnitureGroupInner(item, noSelect) {
+    const selected = !noSelect && item.id === selectedId;
     const type = recognizeFurnitureType(item.name);
     let body;
     switch (type) {
