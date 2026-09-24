@@ -30,3 +30,7 @@ Beispiel:
 ## 2026-09-23
 - "+ Neue Variante" übernimmt jetzt standardmäßig Möbel + Bodenbelag der aktuell aktiven Variante; separater "Duplizieren"-Button entfernt, da nicht mehr nötig. Neuer Variantenname weiterhin fortlaufend "Variante N" (höchste bestehende Nummer im Raum + 1, unabhängig vom Namen der Quellvariante). Tests für Duplizierung und Nummerierung ergänzt.
 - Dateien: js/store.js, js/ui.js, index.html, tests/variants.test.js (neu)
+
+## 2026-09-24
+- Bug-Fix: Maßlinien (Möbel-Kantenabstand, Tür/Fenster-Eckabstand) waren zwar als "editierbar" angelegt, aber ein Klick auf die Maßzahl blurte das gerade geöffnete Eingabefeld sofort wieder (Klickziel war ein nicht fokussierbares SVG-Element) und committete ungewollt den unveränderten Wert, bevor eine Eingabe möglich war - wirkte dadurch wie eine reine Anzeige. `preventDefault()` auf dem auslösenden `pointerdown` verhindert den vorzeitigen Fokusverlust; Eingabefeld bleibt jetzt offen, Enter/Fokus-Verlust übernimmt den neuen Wert, Escape verwirft ihn. Betrifft Möbel-Kantenabstand und Tür/Fenster-Eckabstand gleichermaßen.
+- Dateien: js/interaction.js

@@ -276,7 +276,14 @@
     if (!item) { group.innerHTML = ""; measureInput.style.display = "none"; return; }
     group.innerHTML = measurementLinesSvg(item, R);
     group.querySelectorAll(".measure-label").forEach(g => {
-      g.addEventListener("pointerdown", (evt) => { evt.stopPropagation(); openMeasureEditor(g.dataset.axis, item, R); });
+      g.addEventListener("pointerdown", (evt) => {
+        // preventDefault: verhindert, dass der Browser das gerade fokussierte
+        // measureInput sofort wieder blurt (Klickziel ist ein nicht
+        // fokussierbares SVG-<g>, sonst schließt sich das Feld augenblicklich).
+        evt.preventDefault();
+        evt.stopPropagation();
+        openMeasureEditor(g.dataset.axis, item, R);
+      });
     });
   }
 
@@ -336,6 +343,7 @@
     </g>`;
     group.innerHTML = s;
     group.querySelector(".opening-measure-label").addEventListener("pointerdown", (evt) => {
+      evt.preventDefault();
       evt.stopPropagation();
       openOpeningMeasureEditor(o, mid);
     });
