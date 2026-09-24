@@ -471,6 +471,7 @@
       room.room = { w, d };
       room.shape = rebuildRectShape(w, d, room.shape);
       room.openings = room.openings.filter(o => openingFits(o, room.shape));
+      repositionItemsAfterShapeChange(room);
       if (rid === store.currentRoomId) {
         camera = { scale: 1, x: 0, y: 0 };
         render();
@@ -568,6 +569,7 @@
         setWallLength(R2.shape, wallIdx, newLen);
         updateRoomDimsFromShape(R2);
         R2.openings = R2.openings.filter(function(o) { return openingFits(o, R2.shape); });
+        repositionItemsAfterShapeChange(R2);
         camera = { scale: 1, x: 0, y: 0 };
         render();
         renderShapeTable();
@@ -596,6 +598,7 @@
     }
     addVertexOnWall(shape, longestIdx, function() { return R.nextWallId++; });
     updateRoomDimsFromShape(R);
+    repositionItemsAfterShapeChange(R);
     camera = { scale: 1, x: 0, y: 0 };
     render();
     renderShapeTable();
@@ -620,6 +623,7 @@
       R.openings = R.openings.filter(function(o) { return o.wallId !== removedWallId && openingFits(o, R.shape); });
     }
     updateRoomDimsFromShape(R);
+    repositionItemsAfterShapeChange(R);
     camera = { scale: 1, x: 0, y: 0 };
     render();
     renderShapeTable();
