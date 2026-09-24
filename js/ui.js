@@ -673,9 +673,6 @@
 
   window.addEventListener("resize", updateRotateButton);
 
-  // ---------- Messwerkzeug Toggle ----------
-  document.getElementById("measureToolBtn").addEventListener("click", toggleMeasureTool);
-
   // ---------- landing page (Projekte + Räume-Übersicht) ----------
   const landingView = document.getElementById("landingView");
   const editorView = document.getElementById("editorView");
@@ -1080,7 +1077,11 @@
     if (!panel) return;
     panel.style.display = 'block';
     document.getElementById('bottomSheet').classList.add('open');
-    document.getElementById('bsOverlay').classList.add('open');
+    var overlay = document.getElementById('bsOverlay');
+    overlay.classList.add('open');
+    // Im Raum-Tab muss der Grundriss anfassbar bleiben (Ecke ziehen) -
+    // das Overlay darf Zeiger-Events dort nicht abfangen.
+    overlay.classList.toggle('pass-through', toolName === 'room');
     if (isDesktop) {
       var toolbar = document.getElementById('bottomToolbar');
       var rect = toolbar.getBoundingClientRect();
@@ -1100,7 +1101,9 @@
   function closeSheet() {
     var wasRoom = activeSheet === 'room';
     document.getElementById('bottomSheet').classList.remove('open');
-    document.getElementById('bsOverlay').classList.remove('open');
+    var overlay = document.getElementById('bsOverlay');
+    overlay.classList.remove('open');
+    overlay.classList.remove('pass-through');
     document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
     document.getElementById('bottomSheet').querySelectorAll('.bs-panel').forEach(function(p) { p.style.display = 'none'; });
     activeSheet = null;

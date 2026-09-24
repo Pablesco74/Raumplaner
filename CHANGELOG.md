@@ -32,5 +32,11 @@ Beispiel:
 - Dateien: js/store.js, js/ui.js, index.html, tests/variants.test.js (neu)
 
 ## 2026-09-24
+- Sidebar "Räume": Eingabefelder für Raummaße umbrechen jetzt (flex-wrap) statt über den rechten Rand hinauszulaufen
+- Redundante Rand-Buttons (Tür/Fenster-Drag-Palette, Messwerkzeug-Icon oben rechts am Grundriss) entfernt - beide Funktionen bereits über die Tabs "Türen" bzw. "Messen" erreichbar; zugehörigen toten Drag-and-Drop-Code für die Öffnungs-Palette entfernt
+- Bug-Fix "Ecke ziehen": Das Vollbild-Overlay des Bottom Sheets blockierte Zeiger-Events auf dem Grundriss, sobald der Raum-Tab geöffnet war (Ecken ließen sich nicht mehr greifen); Overlay lässt Zeiger-Events jetzt durch, während der Raum-Tab aktiv ist
+- Dateien: style.css, index.html, js/interaction.js, js/ui.js
+
+## 2026-09-24
 - Bug-Fix: Maßlinien (Möbel-Kantenabstand, Tür/Fenster-Eckabstand) waren zwar als "editierbar" angelegt, aber ein Klick auf die Maßzahl blurte das gerade geöffnete Eingabefeld sofort wieder (Klickziel war ein nicht fokussierbares SVG-Element) und committete ungewollt den unveränderten Wert, bevor eine Eingabe möglich war - wirkte dadurch wie eine reine Anzeige. `preventDefault()` auf dem auslösenden `pointerdown` verhindert den vorzeitigen Fokusverlust; Eingabefeld bleibt jetzt offen, Enter/Fokus-Verlust übernimmt den neuen Wert, Escape verwirft ihn. Betrifft Möbel-Kantenabstand und Tür/Fenster-Eckabstand gleichermaßen.
 - Dateien: js/interaction.js
