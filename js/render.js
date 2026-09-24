@@ -119,6 +119,11 @@
       g.innerHTML = furnitureGroupInner(item);
       g.addEventListener("pointerdown", startDrag);
       svg.appendChild(g);
+
+      const labelG = document.createElementNS(NS, "g");
+      labelG.dataset.labelId = item.id;
+      labelG.innerHTML = furnitureLabelSvg(item);
+      svg.appendChild(labelG);
     });
 
     updateRotateButton();
@@ -158,6 +163,8 @@
   function refreshItemVisual(item) {
     const g = svg.querySelector(`g[data-id="${item.id}"]`);
     if (g) g.innerHTML = furnitureGroupInner(item);
+    const labelG = svg.querySelector(`g[data-label-id="${item.id}"]`);
+    if (labelG) labelG.innerHTML = furnitureLabelSvg(item);
   }
   function refreshAllVisuals() {
     const R = currentRoom();

@@ -290,18 +290,19 @@
   function openMeasureEditor(axis, item, R) {
     const guides = nearestEdges(item, R);
     const g = axis === "h" ? guides.horiz : guides.vert;
-    const svgRect = svg.getBoundingClientRect();
     const wrapRect = canvasWrap.getBoundingClientRect();
-    const vb = svg.viewBox.baseVal;
-    const scale = svgRect.width / vb.width;
     const box = guides.box;
     let midRoomX, midRoomY;
     if (axis === "h") { midRoomX = (g.from + g.to) / 2; midRoomY = (box.minY + box.maxY) / 2; }
     else { midRoomX = (box.minX + box.maxX) / 2; midRoomY = (g.from + g.to) / 2; }
-    const screenX = svgRect.left + (midRoomX - vb.x) * scale;
-    const screenY = svgRect.top + (midRoomY - vb.y) * scale;
-    measureInput.style.left = (screenX - wrapRect.left - 26) + "px";
-    measureInput.style.top = (screenY - wrapRect.top - 11) + "px";
+    // getScreenCTM() statt manueller Skalenrechnung: berücksichtigt
+    // preserveAspectRatio-Letterboxing korrekt (Raum-Seitenverhältnis
+    // weicht oft vom SVG-Element ab, siehe svgPoint()).
+    const pt = svg.createSVGPoint();
+    pt.x = midRoomX; pt.y = midRoomY;
+    const screenPt = pt.matrixTransform(svg.getScreenCTM());
+    measureInput.style.left = (screenPt.x - wrapRect.left - 26) + "px";
+    measureInput.style.top = (screenPt.y - wrapRect.top - 11) + "px";
     measureInput.style.display = "block";
     measureInput.value = Math.round(g.gap);
     measureInput.dataset.mode = "furniture";
@@ -350,14 +351,12 @@
   }
 
   function openOpeningMeasureEditor(o, midRoomPoint) {
-    const svgRect = svg.getBoundingClientRect();
     const wrapRect = canvasWrap.getBoundingClientRect();
-    const vb = svg.viewBox.baseVal;
-    const scale = svgRect.width / vb.width;
-    const screenX = svgRect.left + (midRoomPoint.x - vb.x) * scale;
-    const screenY = svgRect.top + (midRoomPoint.y - vb.y) * scale;
-    measureInput.style.left = (screenX - wrapRect.left - 26) + "px";
-    measureInput.style.top = (screenY - wrapRect.top - 11) + "px";
+    const pt = svg.createSVGPoint();
+    pt.x = midRoomPoint.x; pt.y = midRoomPoint.y;
+    const screenPt = pt.matrixTransform(svg.getScreenCTM());
+    measureInput.style.left = (screenPt.x - wrapRect.left - 26) + "px";
+    measureInput.style.top = (screenPt.y - wrapRect.top - 11) + "px";
     measureInput.style.display = "block";
     const R = currentRoom();
     const span = openingSpan(o, R.shape);

@@ -44,3 +44,8 @@ Beispiel:
 ## 2026-09-24
 - Bug-Fix: Möbel-Namenslabel wanderte beim Drehen des Möbelstücks zu einer anderen Ecke (teils außerhalb des Möbelkörpers), statt an Ort und Stelle zu bleiben. Ursache: Die Gegenrotation des Labels lief um den eigenen Textanker statt um dieselbe Möbelmitte wie die Rotation der Elterngruppe. Gegenrotation läuft jetzt um denselben Drehpunkt - Label bleibt fest an seiner lokalen Position, unabhängig von der Rotation.
 - Dateien: js/svg-elements.js
+
+## 2026-09-24
+- Bug-Fix (Nachbesserung des vorherigen Eintrags): Bei nicht-quadratischen Möbeln (z. B. Standardmaße 160×80) landete der fixierte Label-Ankerpunkt nach einer 90°/270°-Drehung außerhalb der jetzt hochkant stehenden Box, da die lokale Ecke des unrotierten Rechtecks nicht mehr innerhalb der (seitenvertauschten) sichtbaren Fläche lag. Label wird jetzt anhand der bereits rotierten Bounding-Box (`getAABB`) positioniert und als eigenständiges, nicht rotiertes Element außerhalb der Möbelgruppe gerendert - bleibt dadurch bei jeder Rotation und jedem Seitenverhältnis innerhalb der sichtbaren Möbelfläche.
+- Bug-Fix: Eingabefeld der editierbaren Maßlinien (Möbel-Kantenabstand, Tür/Fenster-Eckabstand) erschien oft weit von der angeklickten Maßzahl versetzt. Ursache: Die Bildschirmposition wurde manuell mit `scale = svgRect.width / viewBox.width` berechnet - das ignoriert, dass das SVG bei abweichendem Seitenverhältnis (Raum vs. Canvas-Panel) per `preserveAspectRatio="xMidYMid meet"` tatsächlich anhand der kleineren Skalierung (oft die Höhe) rendert und zentriert (Letterboxing). Nutzt jetzt `getScreenCTM()` wie der Rest der App (z. B. `svgPoint()`), das das automatisch korrekt berücksichtigt.
+- Dateien: js/svg-elements.js, js/render.js, js/interaction.js, js/compare.js
