@@ -13,6 +13,7 @@ const palette = [
   const SNAP = 15;     // Andock-Bereich in cm
   let selectedId = null; // UI-only, nicht Teil der gespeicherten Struktur
   let selectedOpeningId = null; // UI-only, ausgewählte Tür/Fenster
+  let shapeEditMode = "numbers"; // UI-only, "numbers" | "drag" - Umschalter im Raum-Tab (Aufgabe 5)
 
   function escapeXml(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
