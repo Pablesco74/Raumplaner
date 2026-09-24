@@ -51,5 +51,9 @@ Beispiel:
 - Dateien: js/svg-elements.js, js/render.js, js/interaction.js, js/compare.js
 
 ## 2026-09-24
+- Raum-Tab: klar sichtbarer Umschalter "Zahleneingabe" / "Ecke ziehen" für die Raumform-Bearbeitung ergänzt (Aufgabe 5). Vorher erschienen die ziehbaren Eckpunkte immer, sobald der Raum-Tab offen war, ohne erkennbaren Modus. Jetzt zeigt "Zahleneingabe" die bestehende Längen/Winkel-Tabelle, "Ecke ziehen" blendet die Tabelle aus und zeigt stattdessen die ziehbaren Eckpunkte im Grundriss (15°-Einrasten bleibt wie gehabt). Beide Modi bearbeiten dieselbe Raumform, kein separater Einstiegsbildschirm.
+- Dateien: index.html, style.css, js/constants.js, js/render.js, js/ui.js
+
+## 2026-09-24
 - Möbel werden nach einer Raumform-Änderung (Zahleneingabe, Ecke ziehen, Ecke hinzufügen/entfernen, Breite/Tiefe-Feld) automatisch neu platziert, wenn sie dadurch ganz oder teilweise außerhalb der neuen Raumfläche liegen (Aufgabe 6). Minimale Verschiebung Richtung Raummitte bis zur nächsten gültigen Position, Ausrichtung/Rotation bleibt erhalten. Gilt variantenübergreifend, da die Raumform pro Raum (nicht pro Variante) gilt. Neue Geometrie-Helfer `pointInPolygon`/`itemFitsInShape`/`repositionItemIntoShape` (js/geometry.js) und `repositionItemsAfterShapeChange` (js/store.js), Tests ergänzt.
 - Dateien: js/geometry.js, js/store.js, js/ui.js, js/interaction.js, tests/furniture-reposition.test.js (neu)

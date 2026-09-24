@@ -580,6 +580,25 @@
     });
   }
 
+  // Umschalter Zahleneingabe / Ecke ziehen (Aufgabe 5). Beide Modi
+  // bearbeiten denselben Raum-Zustand, nur die Sichtbarkeit der
+  // Bedienelemente unterscheidet sich.
+  function applyShapeEditMode() {
+    var isDrag = shapeEditMode === "drag";
+    document.getElementById("shapeWallTable").style.display = isDrag ? "none" : "";
+    document.getElementById("shapeDragHint").style.display = isDrag ? "block" : "none";
+    document.querySelectorAll(".shape-mode-btn").forEach(function(btn) {
+      btn.classList.toggle("active", btn.dataset.shapemode === shapeEditMode);
+    });
+    renderVertexHandles();
+  }
+  document.querySelectorAll(".shape-mode-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      shapeEditMode = btn.dataset.shapemode;
+      applyShapeEditMode();
+    });
+  });
+
   function showShapeMsg(text) {
     var el = document.getElementById("shapeMsg");
     el.textContent = text;
@@ -1097,7 +1116,7 @@
     activeSheet = toolName;
     if (toolName === 'furniture') renderFurnitureList();
     if (toolName === 'openings') { refreshWallAndCornerOptions(); renderOpeningList(); }
-    if (toolName === 'room') { renderShapeTable(); renderVertexHandles(); }
+    if (toolName === 'room') { renderShapeTable(); applyShapeEditMode(); }
     if (toolName === 'variants') renderVariantTabs();
     if (toolName === 'rooms') renderRoomSidebarList();
   }

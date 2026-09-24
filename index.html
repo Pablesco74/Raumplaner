@@ -192,7 +192,12 @@
       </div>
       <div class="card" id="shapeSection">
         <h3>Wände &amp; Ecken</h3>
+        <div class="shape-mode-toggle" id="shapeModeToggle">
+          <button class="shape-mode-btn active" data-shapemode="numbers" type="button">Zahleneingabe</button>
+          <button class="shape-mode-btn" data-shapemode="drag" type="button">Ecke ziehen</button>
+        </div>
         <div id="shapeWallTable"></div>
+        <p class="shape-drag-hint" id="shapeDragHint" style="display:none;">Ecken im Grundriss anfassen und ziehen. Rastet alle 15° ein.</p>
         <div class="add-form" style="margin-top:8px; gap:6px;">
           <button id="shapeAddVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Ecke hinzufügen</button>
           <button id="shapeRemoveVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">− Ecke entfernen</button>
