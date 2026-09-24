@@ -38,6 +38,25 @@
     room.nextVariantId = 2;
   }
 
+  /**
+   * Verschiebt nach einer Raumform-Änderung alle Möbelstücke, die jetzt
+   * ganz oder teilweise außerhalb der neuen Raumfläche liegen, minimal
+   * an eine gültige Position (Aufgabe 6). Läuft über alle Varianten,
+   * da die Raumform variantenübergreifend identisch ist - room.items
+   * zeigt auf dasselbe Array wie die aktive Variante und wird dadurch
+   * automatisch mit aktualisiert.
+   */
+  function repositionItemsAfterShapeChange(room) {
+    ensureVariants(room);
+    var changed = false;
+    room.variants.forEach(function(v) {
+      v.items.forEach(function(item) {
+        if (repositionItemIntoShape(item, room.shape)) changed = true;
+      });
+    });
+    return changed;
+  }
+
   function saveCurrentVariant(room) {
     ensureVariants(room);
     var v = room.variants[room.currentVariantIdx || 0];

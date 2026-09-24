@@ -354,19 +354,70 @@
   }
 
   // ---------- bounding box + snapping ----------
-  function getAABB(item) {
+  /** Die vier Eckpunkte eines (ggf. rotierten) Möbelstücks in Raumkoordinaten. */
+  function itemCorners(item) {
     const cx = item.x + item.w / 2;
     const cy = item.y + item.d / 2;
     const rad = item.rot * Math.PI / 180;
     const cos = Math.cos(rad), sin = Math.sin(rad);
-    const corners = [
+    return [
       [-item.w / 2, -item.d / 2], [item.w / 2, -item.d / 2],
       [item.w / 2, item.d / 2], [-item.w / 2, item.d / 2]
     ].map(([lx, ly]) => ({ x: cx + lx * cos - ly * sin, y: cy + lx * sin + ly * cos }));
+  }
+
+  function getAABB(item) {
+    const corners = itemCorners(item);
     return {
       minX: Math.min(...corners.map(c => c.x)), maxX: Math.max(...corners.map(c => c.x)),
       minY: Math.min(...corners.map(c => c.y)), maxY: Math.max(...corners.map(c => c.y))
     };
+  }
+
+  /** Ray-Casting Punkt-in-Polygon-Test. */
+  function pointInPolygon(x, y, vertices) {
+    let inside = false;
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+      const xi = vertices[i].x, yi = vertices[i].y, xj = vertices[j].x, yj = vertices[j].y;
+      const intersects = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersects) inside = !inside;
+    }
+    return inside;
+  }
+
+  /** Liegt das (ggf. rotierte) Möbelstück vollständig innerhalb der Raumform? */
+  function itemFitsInShape(item, shape) {
+    return itemCorners(item).every(c => pointInPolygon(c.x, c.y, shape.vertices));
+  }
+
+  /**
+   * Verschiebt ein Möbelstück, das nach einer Formänderung ganz oder
+   * teilweise außerhalb der Raumfläche liegt, auf dem kürzesten Weg
+   * Richtung Raummitte an die nächste Position, an der es wieder
+   * vollständig innerhalb liegt (Aufgabe 6). Rotation bleibt erhalten.
+   * Gibt true zurück, wenn das Möbelstück verschoben wurde.
+   */
+  function repositionItemIntoShape(item, shape) {
+    if (itemFitsInShape(item, shape)) return false;
+    const n = shape.vertices.length;
+    const centroid = shape.vertices.reduce(
+      (acc, v) => ({ x: acc.x + v.x / n, y: acc.y + v.y / n }), { x: 0, y: 0 }
+    );
+    const x0 = item.x, y0 = item.y;
+    const dx = centroid.x - (x0 + item.w / 2), dy = centroid.y - (y0 + item.d / 2);
+    const steps = 40;
+    let result = { x: x0 + dx, y: y0 + dy }; // Fallback: Raummitte, falls nichts dazwischen passt
+    for (let s = 1; s <= steps; s++) {
+      const t = s / steps;
+      const candidate = { x: x0 + dx * t, y: y0 + dy * t };
+      if (itemFitsInShape({ x: candidate.x, y: candidate.y, w: item.w, d: item.d, rot: item.rot }, shape)) {
+        result = candidate;
+        break;
+      }
+    }
+    item.x = Math.round(result.x);
+    item.y = Math.round(result.y);
+    return true;
   }
 
   function distPointToSegment(px, py, ax, ay, bx, by) {

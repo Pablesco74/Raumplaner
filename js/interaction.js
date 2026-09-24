@@ -40,6 +40,7 @@
     const R = currentRoom();
     if (R) {
       R.openings = R.openings.filter(function(o) { return openingFits(o, R.shape); });
+      repositionItemsAfterShapeChange(R);
     }
     render();
     renderOpeningList();
