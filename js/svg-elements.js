@@ -186,7 +186,12 @@
     const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.13), 12);
     const lx = item.x + 3;
     const ly = item.y + item.d - 4;
-    const counterRot = item.rot ? ` transform="rotate(${-item.rot} ${lx} ${ly})"` : '';
+    // Gegenrotation um denselben Punkt wie die Rotation der Elterngruppe
+    // (Möbelmitte), nicht um lx/ly - sonst schwingt der Anker bei jeder
+    // Drehung zu einer anderen Ecke, statt an Ort und Stelle zu bleiben.
+    const pivotX = item.x + item.w / 2;
+    const pivotY = item.y + item.d / 2;
+    const counterRot = item.rot ? ` transform="rotate(${-item.rot} ${pivotX} ${pivotY})"` : '';
     const label = `<text x="${lx}" y="${ly}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600" pointer-events="none"${counterRot}>${escapeXml(item.name)}</text>`;
 
     const selOutline = selected

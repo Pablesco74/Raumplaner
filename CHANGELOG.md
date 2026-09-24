@@ -40,3 +40,7 @@ Beispiel:
 ## 2026-09-24
 - Bug-Fix: Maßlinien (Möbel-Kantenabstand, Tür/Fenster-Eckabstand) waren zwar als "editierbar" angelegt, aber ein Klick auf die Maßzahl blurte das gerade geöffnete Eingabefeld sofort wieder (Klickziel war ein nicht fokussierbares SVG-Element) und committete ungewollt den unveränderten Wert, bevor eine Eingabe möglich war - wirkte dadurch wie eine reine Anzeige. `preventDefault()` auf dem auslösenden `pointerdown` verhindert den vorzeitigen Fokusverlust; Eingabefeld bleibt jetzt offen, Enter/Fokus-Verlust übernimmt den neuen Wert, Escape verwirft ihn. Betrifft Möbel-Kantenabstand und Tür/Fenster-Eckabstand gleichermaßen.
 - Dateien: js/interaction.js
+
+## 2026-09-24
+- Bug-Fix: Möbel-Namenslabel wanderte beim Drehen des Möbelstücks zu einer anderen Ecke (teils außerhalb des Möbelkörpers), statt an Ort und Stelle zu bleiben. Ursache: Die Gegenrotation des Labels lief um den eigenen Textanker statt um dieselbe Möbelmitte wie die Rotation der Elterngruppe. Gegenrotation läuft jetzt um denselben Drehpunkt - Label bleibt fest an seiner lokalen Position, unabhängig von der Rotation.
+- Dateien: js/svg-elements.js
