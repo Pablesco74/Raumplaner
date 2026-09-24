@@ -144,7 +144,7 @@
     var roomPanel = document.getElementById("bsRoom");
     var shapeSection = document.getElementById("shapeSection");
     var shapeVisible = (roomPanel && roomPanel.style.display !== 'none') || (shapeSection && shapeSection.open);
-    if (!shapeVisible) { group.innerHTML = ""; return; }
+    if (!shapeVisible || shapeEditMode !== "drag") { group.innerHTML = ""; return; }
     const R = currentRoom();
     if (!R) { group.innerHTML = ""; return; }
     let s = "";
