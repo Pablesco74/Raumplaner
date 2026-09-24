@@ -30,3 +30,9 @@ Beispiel:
 ## 2026-09-23
 - "+ Neue Variante" übernimmt jetzt standardmäßig Möbel + Bodenbelag der aktuell aktiven Variante; separater "Duplizieren"-Button entfernt, da nicht mehr nötig. Neuer Variantenname weiterhin fortlaufend "Variante N" (höchste bestehende Nummer im Raum + 1, unabhängig vom Namen der Quellvariante). Tests für Duplizierung und Nummerierung ergänzt.
 - Dateien: js/store.js, js/ui.js, index.html, tests/variants.test.js (neu)
+
+## 2026-09-24
+- Sidebar "Räume": Eingabefelder für Raummaße umbrechen jetzt (flex-wrap) statt über den rechten Rand hinauszulaufen
+- Redundante Rand-Buttons (Tür/Fenster-Drag-Palette, Messwerkzeug-Icon oben rechts am Grundriss) entfernt - beide Funktionen bereits über die Tabs "Türen" bzw. "Messen" erreichbar; zugehörigen toten Drag-and-Drop-Code für die Öffnungs-Palette entfernt
+- Bug-Fix "Ecke ziehen": Das Vollbild-Overlay des Bottom Sheets blockierte Zeiger-Events auf dem Grundriss, sobald der Raum-Tab geöffnet war (Ecken ließen sich nicht mehr greifen); Overlay lässt Zeiger-Events jetzt durch, während der Raum-Tab aktiv ist
+- Dateien: style.css, index.html, js/interaction.js, js/ui.js
