@@ -183,22 +183,25 @@
       case "wardrobe": body = wardrobeIcon(item); break;
       default: body = genericIcon(item);
     }
-    const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.13), 12);
-    const lx = item.x + 3;
-    const ly = item.y + item.d - 4;
-    // Gegenrotation um denselben Punkt wie die Rotation der Elterngruppe
-    // (Möbelmitte), nicht um lx/ly - sonst schwingt der Anker bei jeder
-    // Drehung zu einer anderen Ecke, statt an Ort und Stelle zu bleiben.
-    const pivotX = item.x + item.w / 2;
-    const pivotY = item.y + item.d / 2;
-    const counterRot = item.rot ? ` transform="rotate(${-item.rot} ${pivotX} ${pivotY})"` : '';
-    const label = `<text x="${lx}" y="${ly}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600" pointer-events="none"${counterRot}>${escapeXml(item.name)}</text>`;
-
     const selOutline = selected
       ? `<rect x="${item.x}" y="${item.y}" width="${item.w}" height="${item.d}" fill="none" stroke="#1B4E8F" stroke-width="2.5" rx="3"/>`
       : "";
     const lockIcon = item.locked
       ? `<text x="${item.x + item.w - 3}" y="${item.y + 3 + Math.min(11, Math.min(item.w, item.d) * 0.16)}" text-anchor="end" font-size="${Math.min(11, Math.max(8, Math.min(item.w, item.d) * 0.16))}">🔒</text>`
       : "";
-    return body + selOutline + furnitureDoorsSvg(item) + lockIcon + label;
+    return body + selOutline + furnitureDoorsSvg(item) + lockIcon;
+  }
+
+  // Name-Label separat von furnitureGroupInner, weil es NICHT Teil der
+  // rotierten Möbelgruppe ist (siehe furnitureLabelSvg-Aufrufer): sonst
+  // würde der Ankerpunkt bei Rechtecken mit ungleichem w/d nach einer
+  // 90°/270°-Drehung weit außerhalb des sichtbaren Möbelkörpers landen.
+  // Position basiert daher auf der bereits rotierten Bounding-Box
+  // (getAABB), nicht auf den unrotierten Lokalkoordinaten.
+  function furnitureLabelSvg(item) {
+    const aabb = getAABB(item);
+    const fontSize = Math.min(Math.max(7, Math.min(item.w, item.d) * 0.13), 12);
+    const lx = aabb.minX + 3;
+    const ly = aabb.maxY - 4;
+    return `<text x="${lx}" y="${ly}" text-anchor="start" fill="#2C2C2A" fill-opacity="0.8" font-size="${fontSize}" font-weight="600" pointer-events="none">${escapeXml(item.name)}</text>`;
   }

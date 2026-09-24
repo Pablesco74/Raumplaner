@@ -53,6 +53,10 @@
       g.setAttribute("transform", `rotate(${item.rot} ${cx} ${cy})`);
       g.innerHTML = furnitureGroupInner(item, true);
       svgEl.appendChild(g);
+
+      const labelG = document.createElementNS(NS, "g");
+      labelG.innerHTML = furnitureLabelSvg(item);
+      svgEl.appendChild(labelG);
     });
   }
 
