@@ -57,3 +57,7 @@ Beispiel:
 ## 2026-09-24
 - Möbel werden nach einer Raumform-Änderung (Zahleneingabe, Ecke ziehen, Ecke hinzufügen/entfernen, Breite/Tiefe-Feld) automatisch neu platziert, wenn sie dadurch ganz oder teilweise außerhalb der neuen Raumfläche liegen (Aufgabe 6). Minimale Verschiebung Richtung Raummitte bis zur nächsten gültigen Position, Ausrichtung/Rotation bleibt erhalten. Gilt variantenübergreifend, da die Raumform pro Raum (nicht pro Variante) gilt. Neue Geometrie-Helfer `pointInPolygon`/`itemFitsInShape`/`repositionItemIntoShape` (js/geometry.js) und `repositionItemsAfterShapeChange` (js/store.js), Tests ergänzt.
 - Dateien: js/geometry.js, js/store.js, js/ui.js, js/interaction.js, tests/furniture-reposition.test.js (neu)
+
+## 2026-09-25
+- Bug-Fix: In mobilen Browsern (v. a. wenn Adressleiste/Navigationsleiste sichtbar sind) war die untere Toolbar (Messen/Möbel/Türen/Raum, Undo/Redo) nicht sichtbar bzw. lag außerhalb des sichtbaren Bereichs. Ursache: `height: 100vh` bezieht sich auf die *Layout*-Viewport-Höhe, die größer sein kann als der tatsächlich sichtbare Bereich, wenn mobiles Browser-Chrome (Adressleiste, Navigationsleiste) eingeblendet ist - das schob die per Flexbox unten angeordnete Toolbar unter den sichtbaren Fold. `#editorView` und `.compare-view` nutzen jetzt `height: 100dvh` (mit `100vh`-Fallback für ältere Browser ohne `dvh`-Unterstützung), das die tatsächlich sichtbare Viewport-Höhe berücksichtigt.
+- Dateien: style.css
