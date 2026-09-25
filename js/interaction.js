@@ -283,29 +283,34 @@
         // fokussierbares SVG-<g>, sonst schließt sich das Feld augenblicklich).
         evt.preventDefault();
         evt.stopPropagation();
-        openMeasureEditor(g.dataset.axis, item, R);
+        openMeasureEditor(g, item, R);
       });
     });
   }
 
-  function openMeasureEditor(axis, item, R) {
-    const guides = nearestEdges(item, R);
-    const g = axis === "h" ? guides.horiz : guides.vert;
-    const wrapRect = canvasWrap.getBoundingClientRect();
-    const box = guides.box;
-    let midRoomX, midRoomY;
-    if (axis === "h") { midRoomX = (g.from + g.to) / 2; midRoomY = (box.minY + box.maxY) / 2; }
-    else { midRoomX = (box.minX + box.maxX) / 2; midRoomY = (g.from + g.to) / 2; }
-    // getScreenCTM() statt manueller Skalenrechnung: berücksichtigt
-    // preserveAspectRatio-Letterboxing korrekt (Raum-Seitenverhältnis
-    // weicht oft vom SVG-Element ab, siehe svgPoint()).
-    const pt = svg.createSVGPoint();
-    pt.x = midRoomX; pt.y = midRoomY;
-    const screenPt = pt.matrixTransform(svg.getScreenCTM());
-    measureInput.style.left = (screenPt.x - wrapRect.left - 26) + "px";
-    measureInput.style.top = (screenPt.y - wrapRect.top - 11) + "px";
+  // Bettet measureInput per <foreignObject> direkt an der Stelle der Maßzahl
+  // im SVG ein (statt es separat per CSS-Pixel-Koordinaten zu positionieren).
+  // Dadurch bearbeitet man das Feld direkt an Ort und Stelle, exakt in
+  // derselben Skalierung wie der Rest des Grundrisses - unabhängig von
+  // Viewport-Verschiebungen (z. B. wenn die Bildschirmtastatur aufklappt).
+  function placeMeasureInputInSvg(g, rect) {
+    const fo = document.createElementNS(NS, "foreignObject");
+    fo.setAttribute("x", rect.getAttribute("x"));
+    fo.setAttribute("y", rect.getAttribute("y"));
+    fo.setAttribute("width", rect.getAttribute("width"));
+    fo.setAttribute("height", rect.getAttribute("height"));
+    fo.appendChild(measureInput);
+    g.innerHTML = "";
+    g.appendChild(fo);
     measureInput.style.display = "block";
-    measureInput.value = Math.round(g.gap);
+  }
+
+  function openMeasureEditor(g, item, R) {
+    const axis = g.dataset.axis;
+    const guides = nearestEdges(item, R);
+    const gd = axis === "h" ? guides.horiz : guides.vert;
+    placeMeasureInputInSvg(g, g.querySelector("rect"));
+    measureInput.value = Math.round(gd.gap);
     measureInput.dataset.mode = "furniture";
     measureInput.dataset.axis = axis;
     measureInput.dataset.itemId = item.id;
@@ -344,21 +349,16 @@
       <text x="${mid.x}" y="${mid.y + 3.5}" text-anchor="middle" font-size="9" fill="#1B4E8F" font-family="Courier New, monospace">${Math.round(dist)}</text>
     </g>`;
     group.innerHTML = s;
-    group.querySelector(".opening-measure-label").addEventListener("pointerdown", (evt) => {
+    const labelG = group.querySelector(".opening-measure-label");
+    labelG.addEventListener("pointerdown", (evt) => {
       evt.preventDefault();
       evt.stopPropagation();
-      openOpeningMeasureEditor(o, mid);
+      openOpeningMeasureEditor(o, labelG);
     });
   }
 
-  function openOpeningMeasureEditor(o, midRoomPoint) {
-    const wrapRect = canvasWrap.getBoundingClientRect();
-    const pt = svg.createSVGPoint();
-    pt.x = midRoomPoint.x; pt.y = midRoomPoint.y;
-    const screenPt = pt.matrixTransform(svg.getScreenCTM());
-    measureInput.style.left = (screenPt.x - wrapRect.left - 26) + "px";
-    measureInput.style.top = (screenPt.y - wrapRect.top - 11) + "px";
-    measureInput.style.display = "block";
+  function openOpeningMeasureEditor(o, g) {
+    placeMeasureInputInSvg(g, g.querySelector("rect"));
     const R = currentRoom();
     const span = openingSpan(o, R.shape);
     const dist = span ? Math.round(Math.min(span.s0, span.seg.length - span.s1)) : 0;
@@ -423,7 +423,10 @@
   function commitMeasureInput() {
     if (measureInput.style.display === "none") return;
     const R = currentRoom();
-    if (measureInput.dataset.mode === "opening") {
+    const mode = measureInput.dataset.mode;
+    measureInput.style.display = "none";
+    canvasWrap.appendChild(measureInput);
+    if (mode === "opening") {
       const o = R ? R.openings.find(x => x.id === Number(measureInput.dataset.openingId)) : null;
       if (o) {
         const span = openingSpan(o, R.shape);
@@ -438,7 +441,6 @@
         render();
         renderOpeningList();
       }
-      measureInput.style.display = "none";
       return;
     }
     const item = R ? R.items.find(i => i.id === Number(measureInput.dataset.itemId)) : null;
@@ -458,12 +460,17 @@
       renderFurnitureList();
       saveStoreNow();
     }
-    measureInput.style.display = "none";
   }
   measureInput.addEventListener("pointerdown", (evt) => evt.stopPropagation());
   measureInput.addEventListener("keydown", (evt) => {
     if (evt.key === "Enter") commitMeasureInput();
-    else if (evt.key === "Escape") measureInput.style.display = "none";
+    else if (evt.key === "Escape") {
+      const mode = measureInput.dataset.mode;
+      measureInput.style.display = "none";
+      canvasWrap.appendChild(measureInput);
+      if (mode === "opening") updateOpeningMeasure();
+      else updateMeasureGuides();
+    }
   });
   measureInput.addEventListener("blur", commitMeasureInput);
 
