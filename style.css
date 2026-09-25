@@ -102,10 +102,21 @@
   .legend .lk { display: inline-block; margin-right: 14px; }
   .legend .sw { display: inline-block; width: 18px; height: 2px; vertical-align: middle; margin-right: 5px; }
 
-  .measure-input {
-    position: absolute; width: 52px; padding: 3px 4px; font-size: 12px;
-    text-align: center; border: 1px solid var(--amber); border-radius: 3px;
-    background: #FFFFFF; color: var(--cream); z-index: 6;
+  #measureInput.measure-input {
+    /* Sitzt in einem <foreignObject> direkt im SVG (siehe placeMeasureInputInSvg
+       in js/interaction.js) - Maße daher in SVG-Nutzereinheiten wie die Maßzahl,
+       die sie ersetzt (rect: 30x16, font-size 9), nicht in CSS-Pixeln.
+       Feste px-Werte statt width/height:100%, da Prozentangaben auf einem
+       direkten <input>-Kind eines <foreignObject> in Chromium nicht zuverlässig
+       gegen dessen Box aufgelöst werden (Input fällt auf UA-Default-Breite
+       zurück und ragt über die eigentliche Box hinaus).
+       ID im Selektor: die generische Regel `input[type="number"] { width: 90px }`
+       (Formularfelder in der Sidebar) hat sonst höhere Spezifität als `.measure-input`
+       allein und würde die feste Breite überschreiben. */
+    display: none; box-sizing: border-box; width: 30px; height: 16px;
+    padding: 0; margin: 0; font-size: 9px; font-family: "Courier New", monospace;
+    text-align: center; border: 0.8px solid var(--amber); border-radius: 3px;
+    background: #FFFFFF; color: var(--amber); z-index: 6;
   }
   .card { background: var(--navy-2); border: 1px solid var(--line-soft); border-radius: 6px; padding: 14px 14px; margin-bottom: 14px; }
   .card h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--cream-dim); margin: 0 0 12px; font-weight: 600; }
