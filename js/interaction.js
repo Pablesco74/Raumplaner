@@ -172,30 +172,9 @@
   });
 
   // ---------- Werkzeug-Leiste (drehen, sperren, löschen) ----------
-  function furnitureToolbarSvg(item, R) {
-    const box = getAABB(item);
-    const cx = (box.minX + box.maxX) / 2;
-    const cy = (box.minY + box.maxY) / 2;
-    const onLeftHalf = cx < R.room.w / 2;
-    const btnR = 15, gap = 7, margin = 20;
-    const anchorX = onLeftHalf ? box.maxX + margin + btnR : box.minX - margin - btnR;
-    const step = btnR * 2 + gap;
-    const stackHeight = step * 2 + btnR * 2;
-    const firstY = cy - stackHeight / 2 + btnR;
-    const buttons = [
-      { tool: "rotate", y: firstY, fill: "#E8A33D", fg: "#4A2E06", icon: "⟳", stroke: "none" },
-      { tool: "lock", y: firstY + step, fill: item.locked ? "#E8A33D" : "#FFFFFF", fg: item.locked ? "#4A2E06" : "#16243B", icon: item.locked ? "🔒" : "🔓", stroke: item.locked ? "none" : "#B9C7DA" },
-      { tool: "delete", y: firstY + step * 2, fill: "#C0392B", fg: "#FFFFFF", icon: "🗑", stroke: "none" }
-    ];
-    let s = "";
-    buttons.forEach(b => {
-      s += `<g class="tool-btn-svg" data-tool="${b.tool}" style="cursor:pointer">
-        <circle cx="${anchorX}" cy="${b.y}" r="${btnR}" fill="${b.fill}" stroke="${b.stroke}" stroke-width="1"/>
-        <text x="${anchorX}" y="${b.y + 5}" text-anchor="middle" font-size="15" fill="${b.fg}">${b.icon}</text>
-      </g>`;
-    });
-    return s;
-  }
+  // Sitzt fest in der Bottom-/Werkzeugleiste (#itemTools) statt schwebend
+  // im Grundriss neben dem ausgewählten Möbelstück - erscheint dort, sobald
+  // ein Möbelstück ausgewählt ist, und verschwindet wieder bei Abwahl.
   function handleToolClick(tool, itemId) {
     const R = currentRoom();
     const item = R ? R.items.find(i => i.id === itemId) : null;
@@ -223,17 +202,20 @@
       renderFurnitureList();
     }
   }
+  const itemTools = document.getElementById("itemTools");
+  const itemLockBtn = document.getElementById("itemLockBtn");
+  document.getElementById("itemRotateBtn").addEventListener("click", () => { if (selectedId != null) handleToolClick("rotate", selectedId); });
+  itemLockBtn.addEventListener("click", () => { if (selectedId != null) handleToolClick("lock", selectedId); });
+  document.getElementById("itemDeleteBtn").addEventListener("click", () => { if (selectedId != null) handleToolClick("delete", selectedId); });
+
   function updateRotateButton() {
-    let group = svg.querySelector("#toolbarGroup");
-    if (!group) { group = document.createElementNS(NS, "g"); group.id = "toolbarGroup"; svg.appendChild(group); }
     const R = currentRoom();
     const item = R ? R.items.find(i => i.id === selectedId) : null;
-    if (!item) { group.innerHTML = ""; return; }
-    group.innerHTML = furnitureToolbarSvg(item, R);
-    group.querySelectorAll("[data-tool]").forEach(g => {
-      g.addEventListener("pointerdown", (evt) => evt.stopPropagation());
-      g.addEventListener("click", () => handleToolClick(g.dataset.tool, item.id));
-    });
+    if (!item) { itemTools.style.display = "none"; return; }
+    itemTools.style.display = "flex";
+    itemLockBtn.textContent = item.locked ? "🔒" : "🔓";
+    itemLockBtn.title = item.locked ? "Möbel entsperren" : "Möbel sperren";
+    itemLockBtn.classList.toggle("armed", item.locked);
   }
 
   // ---------- measurement guides (Abstand zur nächsten Kante) ----------

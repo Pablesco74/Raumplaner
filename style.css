@@ -279,6 +279,8 @@
     width: 1px; height: 28px; background: var(--line-soft);
     margin: 0 6px; flex-shrink: 0;
   }
+  .item-tools { display: flex; align-items: center; gap: 2px; }
+  .item-tools .toolbar-divider { margin-right: 6px; }
 
   /* ---------- Bottom Sheet ---------- */
   .bs-overlay {
