@@ -125,11 +125,7 @@
     });
     openingListEl.querySelectorAll("[data-odel]").forEach(btn => {
       btn.addEventListener("click", () => {
-        const R2 = currentRoom();
-        const id = Number(btn.dataset.odel);
-        R2.openings = R2.openings.filter(o => o.id !== id);
-        render();
-        renderOpeningList();
+        handleOpeningToolClick("delete", Number(btn.dataset.odel));
       });
     });
   }
@@ -194,7 +190,7 @@
     const pos = cornerDistToPos(wallId, R.shape, corner, dist, width);
     const hingeAtStart = hingeCornerToAtStart(wallId, R.shape, hingeCorner);
 
-    const candidate = { wallId, type, width, pos, hingeAtStart };
+    const candidate = { wallId, type, width, pos, hingeAtStart, locked: false };
     if (!openingFits(candidate, R.shape)) {
       const idx = wallIndexById(R.shape, wallId);
       const seg = idx >= 0 ? getWallSegment(R.shape, idx) : { length: 0 };
