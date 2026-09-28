@@ -73,3 +73,7 @@ Beispiel:
 ## 2026-09-28
 - Kategorien in der Seitenleiste (z. B. "Möbel hinzufügen", "Möbelliste", "Bodenbelag", "Wände & Ecken") sind jetzt einklappbar, um Scroll-Länge zu reduzieren. Umsetzung über natives `<details>`/`<summary>` statt eigener Toggle-Logik. Alle Kategorien starten offen (bisheriges Verhalten unverändert). Die Eckpunkte im Ecke-ziehen-Modus (Grundriss) blenden sich jetzt zusätzlich aus, wenn die Karte "Wände & Ecken" eingeklappt wird.
 - Dateien: index.html, style.css, js/ui.js
+
+## 2026-09-28
+- Raum-Tab: Beim Umschalten auf "Ecke ziehen" schließt sich das Bottom Sheet jetzt automatisch, da es sonst die untere Raumhälfte abdeckt und Ecken dort nicht erreichbar waren. Der komplette Grundriss inkl. aller Eckpunkte ist danach sichtbar und frei ziehbar. Erneutes Antippen von "Raum" öffnet das Sheet wieder (weiterhin im Ecke-ziehen-Modus).
+- Dateien: js/ui.js
