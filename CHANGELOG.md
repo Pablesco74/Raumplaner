@@ -77,3 +77,8 @@ Beispiel:
 ## 2026-09-28
 - Raum-Tab: Beim Umschalten auf "Ecke ziehen" schließt sich das Bottom Sheet jetzt automatisch, da es sonst die untere Raumhälfte abdeckt und Ecken dort nicht erreichbar waren. Der komplette Grundriss inkl. aller Eckpunkte ist danach sichtbar und frei ziehbar. Erneutes Antippen von "Raum" öffnet das Sheet wieder (weiterhin im Ecke-ziehen-Modus).
 - Dateien: js/ui.js
+
+## 2026-09-28
+- Aufgabe C (Rest): "Vergleichen" ist jetzt auch im Varianten-Sheet auf Mobile erreichbar (bisher nur im Desktop-Header, auf Mobile per CSS komplett ausgeblendet und dadurch unerreichbar) - inkl. Rückweg zur Standardansicht über den bestehenden "Zurück zur Bearbeitung"-Button. Auf Desktop bleibt nur der Header-Button sichtbar (kein Duplikat in der Sidebar).
+- Bottom Sheets lassen sich jetzt zusätzlich per Wegwischen nach unten am Griff-Balken schließen (Touch/Pointer-Geste, größere Trefffläche als der sichtbare Balken). Unterhalb eines Viertels der Sheet-Höhe schnappt es per bestehender Transition zurück in die offene Position, darüber schließt es wie beim Tippen auf den abgedunkelten Hintergrund.
+- Dateien: index.html, style.css, js/compare.js, js/ui.js

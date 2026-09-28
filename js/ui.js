@@ -1161,6 +1161,41 @@
   document.getElementById('undoBtnBar').addEventListener('click', undo);
   document.getElementById('redoBtnBar').addEventListener('click', redo);
 
+  // ---------- Bottom Sheet: Wegwischen nach unten schließt (Mobile) ----------
+  // Der Griff-Balken (.bs-handle) ist auf Desktop ausgeblendet, daher greift
+  // das hier nur auf Mobile. Während des Ziehens folgt das Sheet 1:1 dem
+  // Finger (Transition per .bs-dragging deaktiviert); ab einem Viertel der
+  // Sheet-Höhe schließt es sich wie über den Hintergrund-Tap, sonst schnappt
+  // es per bestehender CSS-Transition zurück in die offene Position.
+  (function setupSheetSwipeToClose() {
+    var handle = document.querySelector('.bs-handle');
+    var sheet = document.getElementById('bottomSheet');
+    if (!handle || !sheet) return;
+    var dragging = null;
+    handle.addEventListener('pointerdown', function(evt) {
+      if (!sheet.classList.contains('open')) return;
+      dragging = { startY: evt.clientY, height: sheet.getBoundingClientRect().height };
+      sheet.classList.add('bs-dragging');
+      handle.setPointerCapture(evt.pointerId);
+    });
+    handle.addEventListener('pointermove', function(evt) {
+      if (!dragging) return;
+      var dy = Math.max(0, evt.clientY - dragging.startY);
+      sheet.style.transform = 'translateY(' + dy + 'px)';
+    });
+    function endDrag(evt) {
+      if (!dragging) return;
+      var dy = Math.max(0, evt.clientY - dragging.startY);
+      var threshold = dragging.height * 0.25;
+      sheet.classList.remove('bs-dragging');
+      sheet.style.transform = '';
+      dragging = null;
+      if (dy > threshold) closeSheet();
+    }
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+  })();
+
   function checkDesktopLayout() {
     var nowDesktop = window.innerWidth >= 768;
     if (nowDesktop === isDesktop) return;

@@ -125,6 +125,9 @@
 
   document.getElementById("compareBtn").addEventListener("click", openCompareMode);
   document.getElementById("compareExitBtn").addEventListener("click", exitCompareMode);
+  // Auf Mobile ist der Header-Button (.room-header-actions) ausgeblendet -
+  // "Vergleichen" ist dort stattdessen im Varianten-Sheet erreichbar.
+  document.getElementById("variantCompareBtn").addEventListener("click", openCompareMode);
 
   // ---------- Zoom (Mausrad/Pinch) & Pan (Ziehen), synchron auf beide Panels ----------
   function compareZoomAt(svgEl, R, clientX, clientY, factor) {

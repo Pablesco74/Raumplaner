@@ -316,10 +316,17 @@
     pointer-events: none;
   }
   .bs.open { transform: translateY(0); pointer-events: auto; }
+  .bs.bs-dragging { transition: none; }
   .bs-handle {
     width: 36px; height: 4px;
     background: var(--line); border-radius: 2px;
     margin: 8px auto 12px;
+    touch-action: none;
+    position: relative;
+  }
+  /* Größere Trefffläche fürs Wegwischen, ohne den schmalen Balken optisch zu ändern. */
+  .bs-handle::before {
+    content: ""; position: absolute; top: -14px; bottom: -14px; left: -50%; right: -50%;
   }
   .bs-panel { display: none; }
   .bs-title {
@@ -411,4 +418,6 @@
     .bs.open { transform: translateY(0); opacity: 1; }
     .bs-handle { display: none; }
     .bs-overlay.open { background: rgba(0,0,0,0.08); }
+    /* Auf Desktop übernimmt der Header-Button (.room-header-actions) das Vergleichen. */
+    #variantCompareBtn { display: none; }
   }
