@@ -56,7 +56,7 @@
       <span class="lk"><span class="sw" style="background:#1F3A5C"></span>Wand</span>
       <span class="lk"><span class="sw" style="background:var(--amber); border-bottom:1px dashed var(--amber)"></span>Tür</span>
       <span class="lk"><span class="sw" style="background:var(--window-blue); border-bottom:1px dashed var(--window-blue)"></span>Fenster</span>
-      <br>Mausrad zum Zoomen &nbsp;·&nbsp; rechte Maustaste ziehen zum Verschieben &nbsp;·&nbsp; Möbel antippen zeigt den Dreh-Knopf
+      <br>Mausrad zum Zoomen &nbsp;·&nbsp; rechte Maustaste ziehen zum Verschieben &nbsp;·&nbsp; Möbel antippen zeigt die Werkzeuge in der Leiste
     </div>
   </div>
 
@@ -212,6 +212,12 @@
     <button class="tool-btn" data-tool="furniture"><span class="tool-icon">🛋️</span><span>Möbel</span></button>
     <button class="tool-btn" data-tool="openings"><span class="tool-icon">🚪</span><span>Türen</span></button>
     <button class="tool-btn" data-tool="room"><span class="tool-icon">📐</span><span>Raum</span></button>
+    <div class="item-tools" id="itemTools" style="display:none;">
+      <div class="toolbar-divider"></div>
+      <button class="icon-btn" id="itemRotateBtn" title="Möbel drehen">⟳</button>
+      <button class="icon-btn" id="itemLockBtn" title="Möbel sperren">🔓</button>
+      <button class="icon-btn danger" id="itemDeleteBtn" title="Möbel löschen">🗑</button>
+    </div>
     <div class="toolbar-divider"></div>
     <button class="icon-btn" id="undoBtnBar" title="Rückgängig (Strg+Z)" disabled>↩</button>
     <button class="icon-btn" id="redoBtnBar" title="Wiederholen (Strg+Y)" disabled>↪</button>
