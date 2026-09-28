@@ -146,8 +146,8 @@
     </div>
 
     <div class="bs-panel" id="bsRooms">
-      <div class="bs-title">Räume</div>
-      <div class="card">
+      <details class="card" id="roomsSection" open>
+        <summary class="bs-title-summary">Räume</summary>
         <div id="roomSidebarList"></div>
         <div class="add-form" style="margin-top: 10px;">
           <div class="field">
@@ -158,12 +158,12 @@
           <button id="sidebarAddFloor" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Stockwerk</button>
         </div>
         <p class="error-msg" id="roomSidebarMsg"></p>
-      </div>
+      </details>
     </div>
 
     <div class="bs-panel" id="bsVariants">
-      <div class="bs-title">Einrichtungsvarianten</div>
-      <div class="card">
+      <details class="card" id="variantsSection" open>
+        <summary class="bs-title-summary">Einrichtungsvarianten</summary>
         <div id="variantTabs" class="variant-tabs"></div>
         <div class="add-form" style="margin-top:8px; gap:6px;">
           <button id="variantAdd" class="ghost-btn" style="font-size:12px; padding:7px 10px;">+ Neue Variante</button>
@@ -171,7 +171,7 @@
           <button id="variantCompareBtn" class="ghost-btn" style="font-size:12px; padding:7px 10px;">Vergleichen</button>
         </div>
         <p class="error-msg" id="variantMsg"></p>
-      </div>
+      </details>
     </div>
 
     <div class="bs-panel" id="bsRoom">
