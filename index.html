@@ -47,6 +47,22 @@
     <button class="variant-pill" id="variantPill"></button>
   </div>
 
+  <div class="bottom-toolbar" id="bottomToolbar">
+    <button class="tool-btn" data-tool="measure"><span class="tool-icon">📏</span><span>Messen</span></button>
+    <button class="tool-btn" data-tool="furniture"><span class="tool-icon">🛋️</span><span>Möbel</span></button>
+    <button class="tool-btn" data-tool="openings"><span class="tool-icon">🚪</span><span>Türen</span></button>
+    <button class="tool-btn" data-tool="room"><span class="tool-icon">📐</span><span>Raum</span></button>
+    <div class="item-tools" id="itemTools" style="display:none;">
+      <div class="toolbar-divider"></div>
+      <button class="icon-btn" id="itemRotateBtn" title="Möbel drehen">⟳</button>
+      <button class="icon-btn" id="itemLockBtn" title="Möbel sperren">🔓</button>
+      <button class="icon-btn danger" id="itemDeleteBtn" title="Möbel löschen">🗑</button>
+    </div>
+    <div class="toolbar-divider"></div>
+    <button class="icon-btn" id="undoBtnBar" title="Rückgängig (Strg+Z)" disabled>↩</button>
+    <button class="icon-btn" id="redoBtnBar" title="Wiederholen (Strg+Y)" disabled>↪</button>
+  </div>
+
   <aside class="desktop-sidebar" id="desktopSidebar"></aside>
 
   <div class="canvas-wrap">
@@ -206,22 +222,6 @@
         <p class="error-msg" id="shapeMsg"></p>
       </details>
     </div>
-  </div>
-
-  <div class="bottom-toolbar" id="bottomToolbar">
-    <button class="tool-btn" data-tool="measure"><span class="tool-icon">📏</span><span>Messen</span></button>
-    <button class="tool-btn" data-tool="furniture"><span class="tool-icon">🛋️</span><span>Möbel</span></button>
-    <button class="tool-btn" data-tool="openings"><span class="tool-icon">🚪</span><span>Türen</span></button>
-    <button class="tool-btn" data-tool="room"><span class="tool-icon">📐</span><span>Raum</span></button>
-    <div class="item-tools" id="itemTools" style="display:none;">
-      <div class="toolbar-divider"></div>
-      <button class="icon-btn" id="itemRotateBtn" title="Möbel drehen">⟳</button>
-      <button class="icon-btn" id="itemLockBtn" title="Möbel sperren">🔓</button>
-      <button class="icon-btn danger" id="itemDeleteBtn" title="Möbel löschen">🗑</button>
-    </div>
-    <div class="toolbar-divider"></div>
-    <button class="icon-btn" id="undoBtnBar" title="Rückgängig (Strg+Z)" disabled>↩</button>
-    <button class="icon-btn" id="redoBtnBar" title="Wiederholen (Strg+Y)" disabled>↪</button>
   </div>
 </div>
 

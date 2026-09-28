@@ -93,3 +93,7 @@ Beispiel:
 ## 2026-09-28
 - Aufgabe D (Rest): "Räume" und "Einrichtungsvarianten" in der Desktop-Sidebar sind jetzt einklappbar (natives `<details class="card"><summary>`, wie bei den bereits einklappbaren Kategorien in den Mobile-Sheets). Zustand ist nur die native `details[open]`-Eigenschaft und wird nicht gespeichert - startet nach jedem Neuladen wieder offen. Mobile-Ansicht unverändert (dort weiterhin ein Panel pro Sheet, kein zusätzlicher Einklapp-Mechanismus nötig).
 - Dateien: index.html, style.css
+
+## 2026-09-28
+- Aufgabe A (Rest): Werkzeugleiste (Messen/Möbel/Türen/Raum, Undo/Redo, kontextabhängige Möbel-/Öffnungs-Werkzeuge) liegt jetzt einheitlich oben, direkt unter dem Header - auf Mobile wie auf Desktop (bisher auf Mobile unten fixiert). Bottom Sheets rutschen weiterhin vom unteren Bildschirmrand hoch (`bottom: 0` statt `bottom: 52px`, da die Werkzeugleiste dort nicht mehr steht), rein visuelle/strukturelle Änderung ohne Funktionsverschiebung.
+- Dateien: index.html, style.css
