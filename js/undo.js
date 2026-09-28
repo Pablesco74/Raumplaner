@@ -8,6 +8,18 @@ let redoStack = [];
 
 let _undoSuppress = false; // unterdrückt Snapshots während undo/redo
 
+// Zustand nach der zuletzt abgeschlossenen Aktion (bzw. nach dem letzten
+// undo/redo) - die Basislinie, die beim NÄCHSTEN saveStoreNow() auf den
+// Undo-Stack gepusht wird. saveStoreNow() wird immer NACH einer Mutation
+// aufgerufen; ein Snapshot des dann schon veränderten store wäre also
+// bereits der neue (Post-Aktion-)Zustand - ein Undo-Klick würde dann nur
+// genau diesen (identischen) Zustand zurückschreiben und sichtbar nichts
+// bewirken, erst der ZWEITE Klick hätte einen Effekt. _lastSnapshot hält
+// stattdessen den Zustand VOR der jeweils nächsten Aktion vor, damit der
+// erste Undo-Klick bereits die zuletzt abgeschlossene Aktion rückgängig
+// macht.
+let _lastSnapshot = null;
+
 function updateUndoButtons() {
   var empty = undoStack.length === 0;
   var noRedo = redoStack.length === 0;
@@ -23,11 +35,13 @@ function updateUndoButtons() {
 
 function undoSnapshot() {
   if (_undoSuppress) return;
-  // Vollständigen Store-Zustand als JSON-String speichern
-  undoStack.push(JSON.stringify(store));
-  if (undoStack.length > UNDO_MAX) undoStack.shift();
-  // Jede neue Aktion löscht den Redo-Stack
-  redoStack = [];
+  if (_lastSnapshot !== null) {
+    undoStack.push(_lastSnapshot);
+    if (undoStack.length > UNDO_MAX) undoStack.shift();
+    // Jede neue Aktion löscht den Redo-Stack
+    redoStack = [];
+  }
+  _lastSnapshot = JSON.stringify(store);
   updateUndoButtons();
 }
 
@@ -58,17 +72,18 @@ function undoApply(json) {
 
 function undo() {
   if (undoStack.length === 0) return;
-  // Aktuellen Zustand auf Redo-Stack
-  redoStack.push(JSON.stringify(store));
   const prev = undoStack.pop();
+  // Aktuell bekannter Zustand wandert auf den Redo-Stack
+  if (_lastSnapshot !== null) redoStack.push(_lastSnapshot);
+  _lastSnapshot = prev;
   undoApply(prev);
 }
 
 function redo() {
   if (redoStack.length === 0) return;
-  // Aktuellen Zustand auf Undo-Stack (ohne Redo zu löschen)
-  undoStack.push(JSON.stringify(store));
   const next = redoStack.pop();
+  if (_lastSnapshot !== null) undoStack.push(_lastSnapshot);
+  _lastSnapshot = next;
   undoApply(next);
 }
 

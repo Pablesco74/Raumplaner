@@ -82,7 +82,7 @@
     R.openings.forEach(o => {
       const g = document.createElementNS(NS, "g");
       g.dataset.openingId = o.id;
-      g.style.cursor = "grab";
+      g.style.cursor = o.locked ? "pointer" : "grab";
       g.innerHTML = openingGroupInner(o, R.shape);
       g.addEventListener("pointerdown", startOpeningDrag);
       svg.appendChild(g);

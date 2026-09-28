@@ -173,8 +173,9 @@
 
   // ---------- Werkzeug-Leiste (drehen, sperren, löschen) ----------
   // Sitzt fest in der Bottom-/Werkzeugleiste (#itemTools) statt schwebend
-  // im Grundriss neben dem ausgewählten Möbelstück - erscheint dort, sobald
-  // ein Möbelstück ausgewählt ist, und verschwindet wieder bei Abwahl.
+  // im Grundriss neben dem ausgewählten Möbelstück/der Öffnung - erscheint
+  // dort, sobald ein Möbelstück ODER eine Tür/Fenster ausgewählt ist, und
+  // verschwindet wieder bei Abwahl. Drehen gibt es nur für Möbel.
   function handleToolClick(tool, itemId) {
     const R = currentRoom();
     const item = R ? R.items.find(i => i.id === itemId) : null;
@@ -200,22 +201,53 @@
       selectedId = null;
       render();
       renderFurnitureList();
+      saveStoreNow();
+    }
+  }
+  function handleOpeningToolClick(tool, openingId) {
+    const R = currentRoom();
+    const o = R ? R.openings.find(x => x.id === openingId) : null;
+    if (!o) return;
+    if (tool === "lock") {
+      o.locked = !o.locked;
+      const gEl = svg.querySelector(`g[data-opening-id="${o.id}"]`);
+      if (gEl) gEl.style.cursor = o.locked ? "pointer" : "grab";
+      updateRotateButton();
+      saveStoreNow();
+    } else if (tool === "delete") {
+      R.openings = R.openings.filter(x => x.id !== o.id);
+      selectedOpeningId = null;
+      render();
+      renderOpeningList();
+      saveStoreNow();
     }
   }
   const itemTools = document.getElementById("itemTools");
+  const itemRotateBtn = document.getElementById("itemRotateBtn");
   const itemLockBtn = document.getElementById("itemLockBtn");
   document.getElementById("itemRotateBtn").addEventListener("click", () => { if (selectedId != null) handleToolClick("rotate", selectedId); });
-  itemLockBtn.addEventListener("click", () => { if (selectedId != null) handleToolClick("lock", selectedId); });
-  document.getElementById("itemDeleteBtn").addEventListener("click", () => { if (selectedId != null) handleToolClick("delete", selectedId); });
+  itemLockBtn.addEventListener("click", () => {
+    if (selectedId != null) handleToolClick("lock", selectedId);
+    else if (selectedOpeningId != null) handleOpeningToolClick("lock", selectedOpeningId);
+  });
+  document.getElementById("itemDeleteBtn").addEventListener("click", () => {
+    if (selectedId != null) handleToolClick("delete", selectedId);
+    else if (selectedOpeningId != null) handleOpeningToolClick("delete", selectedOpeningId);
+  });
 
   function updateRotateButton() {
     const R = currentRoom();
     const item = R ? R.items.find(i => i.id === selectedId) : null;
-    if (!item) { itemTools.style.display = "none"; return; }
+    const opening = (!item && R) ? R.openings.find(o => o.id === selectedOpeningId) : null;
+    const target = item || opening;
+    if (!target) { itemTools.style.display = "none"; return; }
     itemTools.style.display = "flex";
-    itemLockBtn.textContent = item.locked ? "🔒" : "🔓";
-    itemLockBtn.title = item.locked ? "Möbel entsperren" : "Möbel sperren";
-    itemLockBtn.classList.toggle("armed", item.locked);
+    itemRotateBtn.style.display = item ? "" : "none";
+    itemLockBtn.textContent = target.locked ? "🔒" : "🔓";
+    itemLockBtn.title = target.locked
+      ? (item ? "Möbel entsperren" : "Tür/Fenster entsperren")
+      : (item ? "Möbel sperren" : "Tür/Fenster sperren");
+    itemLockBtn.classList.toggle("armed", !!target.locked);
   }
 
   // ---------- measurement guides (Abstand zur nächsten Kante) ----------
@@ -360,6 +392,7 @@
     const o = R.openings.find(x => x.id === id);
     if (!o) return;
     selectOpening(id);
+    if (o.locked) return;
     const span = openingSpan(o, R.shape);
     if (!span) return;
     const { seg } = span;
