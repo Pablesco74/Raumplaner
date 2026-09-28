@@ -69,3 +69,7 @@ Beispiel:
 ## 2026-09-28
 - Werkzeuge für ausgewählte Möbelstücke (Drehen, Sperren, Löschen) sitzen jetzt fest in der Werkzeugleiste (neben Messen/Möbel/Türen/Raum) statt als schwebende Buttons im Grundriss neben dem Möbelstück zu erscheinen. Erscheinen dort, sobald ein Möbelstück ausgewählt ist, verschwinden wieder bei Abwahl. Gleiche Funktionen wie zuvor (90°-Drehung, Sperren/Entsperren, Löschen mit Bestätigung über den bestehenden Lösch-Button-Stil).
 - Dateien: index.html, style.css, js/interaction.js
+
+## 2026-09-28
+- Kategorien in der Seitenleiste (z. B. "Möbel hinzufügen", "Möbelliste", "Bodenbelag", "Wände & Ecken") sind jetzt einklappbar, um Scroll-Länge zu reduzieren. Umsetzung über natives `<details>`/`<summary>` statt eigener Toggle-Logik. Alle Kategorien starten offen (bisheriges Verhalten unverändert). Die Eckpunkte im Ecke-ziehen-Modus (Grundriss) blenden sich jetzt zusätzlich aus, wenn die Karte "Wände & Ecken" eingeklappt wird.
+- Dateien: index.html, style.css, js/ui.js

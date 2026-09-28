@@ -65,8 +65,8 @@
     <div class="bs-handle"></div>
     <div class="bs-panel" id="bsFurniture">
       <div class="bs-title">Möbelstücke</div>
-      <div class="card">
-        <h3>Möbel hinzufügen</h3>
+      <details class="card" open>
+        <summary>Möbel hinzufügen</summary>
         <div class="add-form">
           <div class="field">
             <label>Name</label>
@@ -90,17 +90,17 @@
           </div>
           <button id="addFurniture">+ Hinzufügen</button>
         </div>
-      </div>
-      <div class="card">
-        <h3>Möbelliste</h3>
+      </details>
+      <details class="card" open>
+        <summary>Möbelliste</summary>
         <div id="furnitureList"></div>
-      </div>
+      </details>
     </div>
 
     <div class="bs-panel" id="bsOpenings">
       <div class="bs-title">Türen &amp; Fenster</div>
-      <div class="card">
-        <h3>Tür / Fenster hinzufügen</h3>
+      <details class="card" open>
+        <summary>Tür / Fenster hinzufügen</summary>
         <div class="add-form">
           <div class="field">
             <label>Wand</label>
@@ -138,11 +138,11 @@
           <button id="addOpening">+ Hinzufügen</button>
         </div>
         <p class="error-msg" id="oError"></p>
-      </div>
-      <div class="card">
-        <h3>Bestehende Türen &amp; Fenster</h3>
+      </details>
+      <details class="card" open>
+        <summary>Bestehende Türen &amp; Fenster</summary>
         <div id="openingList"></div>
-      </div>
+      </details>
     </div>
 
     <div class="bs-panel" id="bsRooms">
@@ -175,8 +175,8 @@
 
     <div class="bs-panel" id="bsRoom">
       <div class="bs-title">Raum</div>
-      <div class="card">
-        <h3>Bodenbelag</h3>
+      <details class="card" open>
+        <summary>Bodenbelag</summary>
         <div class="add-form">
           <div class="field">
             <label>Anzeige</label>
@@ -189,9 +189,9 @@
             </select>
           </div>
         </div>
-      </div>
-      <div class="card" id="shapeSection">
-        <h3>Wände &amp; Ecken</h3>
+      </details>
+      <details class="card" id="shapeSection" open>
+        <summary>Wände &amp; Ecken</summary>
         <div class="shape-mode-toggle" id="shapeModeToggle">
           <button class="shape-mode-btn active" data-shapemode="numbers" type="button">Zahleneingabe</button>
           <button class="shape-mode-btn" data-shapemode="drag" type="button">Ecke ziehen</button>
@@ -203,7 +203,7 @@
           <button id="shapeRemoveVertex" class="ghost-btn" style="font-size:12px; padding:7px 10px;">− Ecke entfernen</button>
         </div>
         <p class="error-msg" id="shapeMsg"></p>
-      </div>
+      </details>
     </div>
   </div>
 
