@@ -598,6 +598,9 @@
       applyShapeEditMode();
     });
   });
+  // Kategorie "Wände & Ecken" ist einklappbar (<details>) - Eckpunkte im
+  // Grundriss (Ecke-ziehen-Modus) nur zeigen, solange die Karte offen ist.
+  document.getElementById("shapeSection").addEventListener("toggle", renderVertexHandles);
 
   function showShapeMsg(text) {
     var el = document.getElementById("shapeMsg");
