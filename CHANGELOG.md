@@ -89,3 +89,7 @@ Beispiel:
 - Bug-Fix Undo/Redo (Off-by-One): `saveStoreNow()` wird immer NACH einer Mutation aufgerufen; das bisherige Snapshot-Verfahren speicherte dadurch den bereits veränderten (Post-Aktion-)Zustand auf dem Undo-Stack - der erste Undo-Klick bewirkte dadurch sichtbar nichts, erst der zweite Klick machte die zuletzt abgeschlossene Aktion rückgängig. Betraf potenziell jede Undo-Aktion in der App, nicht nur Löschen. `js/undo.js` hält jetzt zusätzlich den Zustand VOR der jeweils nächsten Aktion vor (`_lastSnapshot`) und pusht diesen statt des aktuellen Zustands.
 - Bug-Fix: Löschen von Möbeln und Öffnungen rief bislang kein `saveStoreNow()` auf (nur das debounced `saveStore()`, das keinen Undo-Snapshot auslöst) - ein Löschen landete dadurch nicht zuverlässig auf dem Undo-Stack. Beide Lösch-Pfade rufen jetzt `saveStoreNow()` auf.
 - Dateien: js/interaction.js, js/render.js, js/ui.js, js/undo.js, tests/undo.test.js (neu)
+
+## 2026-09-28
+- Aufgabe D (Rest): "Räume" und "Einrichtungsvarianten" in der Desktop-Sidebar sind jetzt einklappbar (natives `<details class="card"><summary>`, wie bei den bereits einklappbaren Kategorien in den Mobile-Sheets). Zustand ist nur die native `details[open]`-Eigenschaft und wird nicht gespeichert - startet nach jedem Neuladen wieder offen. Mobile-Ansicht unverändert (dort weiterhin ein Panel pro Sheet, kein zusätzlicher Einklapp-Mechanismus nötig).
+- Dateien: index.html, style.css

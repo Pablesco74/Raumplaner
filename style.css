@@ -333,6 +333,17 @@
     font-size: 14px; font-weight: 600;
     color: var(--cream); margin: 0 0 12px;
   }
+  /* "Räume"/"Einrichtungsvarianten": eigene Bereiche in der Desktop-Sidebar,
+     einklappbar über <details class="card"><summary class="bs-title-summary">.
+     Nutzt Chevron/Cursor von .card summary, aber die größere Titel-Optik
+     von .bs-title statt der kleinen Kategorie-Beschriftung. Zustand ist
+     nur die native details[open]-Eigenschaft, wird nicht gespeichert. */
+  .bs-title-summary {
+    font-size: 14px; text-transform: none; letter-spacing: normal;
+    color: var(--cream); font-weight: 600;
+  }
+  .card[open] > .bs-title-summary { margin: 0 0 12px; }
+  .card:not([open]) > .bs-title-summary { margin: 0; }
 
   /* ---------- Vergleichsmodus ---------- */
   .compare-view {
@@ -390,7 +401,6 @@
       position: relative; z-index: 20;
     }
     .desktop-sidebar .bs-panel { display: block !important; }
-    .desktop-sidebar .bs-title { margin-top: 0; }
     .bottom-toolbar {
       grid-column: 2; grid-row: 2;
       justify-content: flex-start;
