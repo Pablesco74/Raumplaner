@@ -596,6 +596,13 @@
     btn.addEventListener("click", function() {
       shapeEditMode = btn.dataset.shapemode;
       applyShapeEditMode();
+      // "Ecke ziehen": Bottom Sheet schließen, damit der komplette Grundriss
+      // sichtbar und alle Ecken frei erreichbar sind (das Sheet deckt sonst
+      // die untere Raumhälfte ab). Die Eckpunkte bleiben trotzdem sichtbar/
+      // ziehbar, da renderVertexHandles() sich am offenen shapeSection-
+      // <details> orientiert, nicht am sichtbaren Bottom Sheet. Erneutes
+      // Antippen von "Raum" öffnet das Sheet (im Ecke-ziehen-Modus) wieder.
+      if (shapeEditMode === "drag") closeSheet();
     });
   });
   // Kategorie "Wände & Ecken" ist einklappbar (<details>) - Eckpunkte im
